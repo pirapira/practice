@@ -1,0 +1,52 @@
+
+======= C =======
+Formal version:
+
+
+module UInt256
+	use import mach.int.Unsigned
+	type uint256
+	constant max_uint256: int = 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+	clone export mach.int.Unsigned with
+		type t = uint256,
+		constant max = max_uint256
+end
+   
+module Contract_C
+	use import int.Int
+	use import ref.Ref
+	use import map.Map
+	use import array.Array
+	use import int.ComputerDivision
+	use import mach.int.Unsigned
+	use import UInt256
+	exception Revert
+	exception Return
+	type state = {
+		mutable _balance: uint256
+	}
+	type account = {
+		mutable balance: uint256;
+		storage: state
+	}
+	val external_call (this: account): bool
+		ensures { result = false -> this = (old this) }
+		writes { this }
+		invariant { to_int this.storage.balance = 150 }
+	let rec _C (this: account):
+			()
+		invariant { to_int this.storage.balance = 150 }
+		writes { this }
+		=
+		let prestate = {balance = this.balance; storage = {_balance = this.storage._balance}} in 
+		try
+		begin
+			this.storage._balance <- (of_int 150)
+		end;
+		raise Return
+		with Return -> () |
+		     Revert -> this.balance <- prestate.balance; this.storage._balance <- prestate.storage._balance; ()
+	end
+end
+
+
