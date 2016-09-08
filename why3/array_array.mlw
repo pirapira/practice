@@ -1,0 +1,8 @@
+(* why3 ide array_array.mlw *)
+module X
+	use import array.Array
+
+	type state = {
+		 mutable x : array (array unit)
+	}
+end
