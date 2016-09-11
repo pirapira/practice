@@ -3,7 +3,7 @@
 ## Problem
 
 It's tricky to send Eth from a Solidity contract.
-There are expressions like `address.send(amount)` and `address.call(amount)()` but they have problems.
+There are expressions like `address.send(amount)` and `address.call.value(amount)()` but they have problems.
 
 * If you do not check the result of the transfer, a malicious caller can set up a big call-depth and cause the transfer to fail, but the business process to move on.
 * If you do check the result of the transfer, the receiver can block the business process by refusing the transfer.
