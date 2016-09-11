@@ -5,7 +5,7 @@
 It's tricky to send Eth from a Solidity contract.
 There are expressions like `address.send(amount)` and `address.call.value(amount)()` but they have problems.
 
-* If you do not check the result of the transfer, a malicious caller can set up a big call-depth and cause the transfer to fail, but the business process to move on.
+* If you do not check the result of the transfer, a malicious caller can set up a big call-depth and cause the transfer to fail, but the business process just moves on, making a loss to the to-be beneficiary.
 * If you do check the result of the transfer, the receiver can block the business process by refusing the transfer.
 
 The current solution is to make the beneficiary withdraw the amount.  [The whole situation is described in @chriseth's post](https://blog.ethereum.org/2016/06/10/smart-contract-security/).
@@ -41,7 +41,7 @@ For some reasons, the parentheses around `new superSend` is necessary.
 * Does it work?
     * I don't know yet.  I don't have a working client (shame!!).
 * Isn't it expensive to (try to) create a new contract for such a purpose?
-    * Maybe not, because the selfdestruction gives a refund.
+    * Maybe not, because the self-destruction gives a refund.
 
 ## Acknowledgments
 
