@@ -39,9 +39,9 @@ For some reasons, the parentheses around `new superSend` is necessary.
 ## Questions
 
 * Does it work?
-    * I don't know yet.  I don't have a working client (shame!!).
+    * It seems to work on [Browser Solidity](https://ethereum.github.io/browser-solidity/#version=soljson-v0.4.1+commit.4fc6fc2c.js) with [this input](https://gist.github.com/anonymous/0674fb275880aebc301304659ad2e1cf), but I haven't tried it on the testnet.
 * Isn't it expensive to (try to) create a new contract for such a purpose?
-    * Maybe not, because the self-destruction gives a refund.
+    * Maybe, maybe not, because the self-destruction gives a refund.
 
 ## Acknowledgments
 
