@@ -25,7 +25,7 @@ contract superSend
 	}
 }
 ```
-The constructor `superSend()` destroys itself, and at the same time, sends all its balance to `_receiver`.  The `_receiver` has no way to refuse this transfer.  So the above problems are mitigated.  Just note that the sender pays the gas.
+The constructor `superSend()` destroys itself, and at the same time, sends all its balance to `_receiver`.  The `_receiver` has no way to refuse this transfer.  So the above problems are mitigated.  Just note that the gas is on the sender's side.
 
 The usage is a bit involved.
 ```
