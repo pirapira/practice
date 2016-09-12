@@ -10,6 +10,8 @@ contract User
 {
 	function pay(address _addr)
 	{
-		(new superSend).value(this.balance)(_addr);
+		superSend s = (new superSend).value(this.balance)(_addr);
+		if (address(s) == 0)
+		   throw;
 	}
 }
