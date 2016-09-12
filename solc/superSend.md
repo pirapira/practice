@@ -1,7 +1,10 @@
 # A way to transfer Eth from a contract?
 
 *Edit: this is considered a loophole, and it's not nice to use it, especially on contracts that performs accounting on the received Eth (see [comment](https://www.reddit.com/r/ethereum/comments/52b8fb/a_way_to_transfer_eth_from_a_contract/d7jbkrt)).*
-*Edit: added a check if the call depth limit has been reached (after reading [a comment by /u/DeviateFish_](https://www.reddit.com/r/ethereum/comments/52b8fb/a_way_to_transfer_eth_from_a_contract/d7j0wmu); though that's only a part of the suggestions in the comment).*
+
+Edit: a similar idea [existed long before](https://gist.github.com/holiman/f66bae83540728c209e521c42bd06362).
+
+Edit: added a check if the call depth limit has been reached (after reading [a comment by /u/DeviateFish_](https://www.reddit.com/r/ethereum/comments/52b8fb/a_way_to_transfer_eth_from_a_contract/d7j0wmu); though that's only a part of the suggestions in the comment).
 
 ## Problem
 
