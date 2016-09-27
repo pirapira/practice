@@ -1,5 +1,9 @@
 # Getting Oyente Working
 
+[Oyente](https://github.com/ethereum/oyente) is a static analyzer for Ethereum smart contracts.
+
+Here I record the procedure to get it working on Ubuntu 16.04.
+
 ## Getting Oyente Recognize Z3
 
 First, at the top of this repository,
