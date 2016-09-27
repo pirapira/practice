@@ -1,6 +1,6 @@
-# Getting Oyente working
+# Getting Oyente Working
 
-## Getting Oyente recognize Z3
+## Getting Oyente Recognize Z3
 
 First, at the top of this repository,
 ```
@@ -96,4 +96,33 @@ usage: oyente.py [-h] [-b] [-j] [-e] [-p] [--error] [-t TIMEOUT] [-d] [-v]
                  [-r]
                  source
 oyente.py: error: too few arguments
+```
+
+## Installing go-ethereum
+
+Follow [the instructions](https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Ubuntu).
+
+
+I still get an error about z3util.
+```
+$ python oyente.py ../simple.sol 
+Contract C:
+Traceback (most recent call last):
+  File "symExec.py", line 7, in <module>
+    from analysis import *
+  File "/home/yh/src/practice/compare-tools/oyente/analysis.py", line 4, in <module>
+    from z3util import *
+ImportError: No module named z3util
+```
+
+So I replace `z3util` with `z3.z3util` in `analysis.py`, `oyente.py` and further in `utils.py`.
+
+Now I got Oyente working.
+```
+python oyente.py ../simple.sol
+...
+          Concurrency Bug:       False
+          Time Dependency:       False
+          Reentrancy bug exists: True
+        ====== Analysis Completed ======
 ```
