@@ -117,9 +117,10 @@ Here is my tentative evaluation of the tool.  I'm going to apply the same scale 
 Soundness here means no false negative, completeness means no false positive.  In many cases
 it's within reach to achieve one of them.
 
-I need to check the paper if any soundness/completeness claims are made.
-Before seeing this, the four booleans (e.g. Reentrancy bug exists: Yes) are only advisory.
-This is already useful for focusing attention on more suspicious code.
+[The Oyente paper](https://eprint.iacr.org/2016/633.pdf) is clear that Oyente does not have completeness (last paragraph of section 5).
+I need to check the paper if any soundness claims are made.
+Before seeing this, the four booleans (e.g. Reentrancy bug exists: Yes) are only advisory,
+although the results are already useful for focusing attention on more suspicious code.
 
 #### Solidity parsing
 
