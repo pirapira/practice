@@ -1,3 +1,6 @@
 [submodule "compare-tools/ens/ens"]
 	path = compare-tools/ens/ens
 	url = git@github.com:Arachnid/ens.git
+[submodule "oyente"]
+	path = compare-tools/oyente
+	url = git@github.com:ethereum/oyente.git
