@@ -4,3 +4,6 @@
 [submodule "oyente"]
 	path = compare-tools/oyente
 	url = git@github.com:ethereum/oyente.git
+[submodule "z3"]
+	path = compare-tools/z3
+	url = git@github.com:Z3Prover/z3.git
