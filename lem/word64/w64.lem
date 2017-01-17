@@ -1,0 +1,4 @@
+open import Num Word
+
+val f : int64 -> int64
+let f x = lnot x
