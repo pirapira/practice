@@ -89,13 +89,22 @@ let c : Rpc.call =
 
 let filename = "/tmp/test/geth.ipc"
 
-type eth_accounts =
-  string list [@@deriving rpc]
+type eth_accounts = string list [@@deriving rpc]
+
+
+let pick_result (j : Rpc.t) =
+  Rpc.
+  (match j with
+  | Dict x ->
+     List.assoc "result" x
+  | _ ->
+     failwith "unexpected form"
+  )
 
 let () =
   let () = Printf.printf "ocaml start\n%!" in
   let res : Rpc.response = (do_rpc_unix filename c) in
-  let json : Rpc.t = Jsonrpc.json_of_response Jsonrpc.V2 res in
+  let json : Rpc.t = pick_result (Jsonrpc.json_of_response Jsonrpc.V2 res) in
   let result : eth_accounts = eth_accounts_of_rpc json in
   let () = Printf.printf "got response %s \n%!" (Jsonrpc.to_string json) in
   ()
