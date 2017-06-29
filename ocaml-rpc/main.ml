@@ -98,75 +98,25 @@ module Utils = struct
 end
 
 
-module Headers = struct
-
-  type t = {
-    version : string;
-    host : string;
-    user_agent : string;
-  }
-
-  let create ~host ~content_type = {
-    host = host;
-    version = "1.1";
-    user_agent = "rpc/" ^ lib_version;
-  }
-
-  exception Http_401_unauthorized
-  exception Http_request_rejected of string
-  exception Http_headers_truncated of string
-  exception Http_empty_request of string
-
-  let assert_success s =
-    match Utils.split ' ' s with
-    | "HTTP/1.1" :: "200" :: _ -> ()
-    | "HTTP/1.1" :: "401" :: _ -> raise Http_401_unauthorized
-    | _                        -> raise (Http_request_rejected s)
-
-  (* Consumes the headers *)
-  let strip (fd: Unix.file_descr) =
-    let buffer = Bytes.of_string " " in
-    let buf = Buffer.create 64 in
-    let finished = ref false in
-    begin try
-        while not !finished do
-          let read = Unix.read fd buffer 0 1 in
-          if read < 1 then raise (Http_headers_truncated (Buffer.contents buf));
-          let n = Buffer.length buf in
-          Buffer.add_char buf (Bytes.get buffer 0);
-          if n >= 4
-          && Buffer.nth buf (n-3) = '\r'
-          && Buffer.nth buf (n-2) = '\n'
-          && Buffer.nth buf (n-1) = '\r'
-          && Buffer.nth buf (n) = '\n' then
-            finished := true
-        done;
-      with Unix.Unix_error(Unix.ECONNRESET, _, _) -> raise Connection_reset end;
-end
-
 type connection =
   | Unix_socket of string
 
-let string_of_rpc_call content_type call =
+let string_of_rpc_call call =
   Jsonrpc.string_of_call call
 
-let rpc_response_of_fd content_type fd =
+let rpc_response_of_fd fd =
   Jsonrpc.response_of_in_channel (Unix.in_channel_of_descr fd)
 
-let send_call ~fd ~content_type call =
-  let body = string_of_rpc_call content_type call in
+let send_call ~fd call =
+  let body = string_of_rpc_call call in
   let output_string str =
     ignore (Unix.write fd (Bytes.of_string str) 0 (String.length str)) in
   output_string body
 
-(** Read the HTTP response from the fd *)
-let recv_response ~fd ~content_type =
-  rpc_response_of_fd content_type fd
-
 let rpc_fd (fd: Unix.file_descr) content_type call =
   try
-    send_call ~fd ~content_type call;
-    recv_response ~fd ~content_type
+    send_call ~fd call;
+    rpc_response_of_fd fd
   with Unix.Unix_error(Unix.ECONNRESET, _, _) ->
     raise Connection_reset
 
