@@ -80,7 +80,7 @@ let do_rpc_unix filename call =
   with_fd ~connection ~call
 
 
-let c : Rpc.call =
+let eth_accounts_call : Rpc.call =
   Rpc.({ name = "eth_accounts"
        ; params = []
        })
@@ -91,7 +91,6 @@ let filename = "/tmp/test/geth.ipc"
 
 type eth_accounts = string list [@@deriving rpc]
 
-
 let pick_result (j : Rpc.t) =
   Rpc.
   (match j with
@@ -101,12 +100,15 @@ let pick_result (j : Rpc.t) =
      failwith "unexpected form"
   )
 
-let () =
-  let () = Printf.printf "ocaml start\n%!" in
-  let res : Rpc.response = (do_rpc_unix filename c) in
+let eth_accounts (filename : string) : eth_accounts =
+  let res : Rpc.response = (do_rpc_unix filename eth_accounts_call) in
   let json : Rpc.t = pick_result (Jsonrpc.json_of_response Jsonrpc.V2 res) in
   let result : eth_accounts = eth_accounts_of_rpc json in
-  let () = Printf.printf "got response %s \n%!" (Jsonrpc.to_string json) in
+  result
+
+let () =
+  let accounts = (eth_accounts filename) in
+  let () = Printf.printf "%d accounts\n" (List.length accounts) in
   ()
 
 (* ocaml-rpc formats every message as an HTTP request while geth does not expect this *)
