@@ -45,55 +45,12 @@ module Utils = struct
     try
       let addr = Unix.ADDR_UNIX(filename) in
       Unix.connect s addr;
+      Printf.eprintf "connected \n%!";
       s
     with e ->
+      Printf.eprintf "some problem \n%!";
       Unix.close s;
       raise e
-
-  let open_connection_fd host port =
-    let s = Unix.socket Unix.PF_INET Unix.SOCK_STREAM 0 in
-    try
-      let he =
-        try Unix.gethostbyname host
-        with Not_found -> raise (Host_not_found host) in
-      if Array.length he.Unix.h_addr_list = 0
-      then failwith (Printf.sprintf "Couldn't resolve hostname: %s" host);
-      let ip = he.Unix.h_addr_list.(0) in
-      let addr = Unix.ADDR_INET(ip, port) in
-      Unix.connect s addr;
-      s
-    with e ->
-      Unix.close s;
-      raise e
-
-  let rec split ?(accu=[]) c s =
-    try
-      let i = String.index s c in
-      let prefix = String.sub s 0 i in
-      let suffix =
-        if i = String.length s - 1 then
-          ""
-        else
-          String.sub s (i+1) (String.length s - i - 1) in
-      split ~accu:(prefix :: accu) c suffix
-    with _ ->
-      List.rev (s :: accu)
-
-  let strip s =
-    let is_space c = c = ' ' || c = '\n' || c = '\r' || c = '\t' in
-    let n = String.length s in
-    let start = ref 0 in
-    let ends = ref (n - 1) in
-    while !start < n && is_space s.[!start] do
-      incr start;
-    done;
-    while  !ends > 0 && is_space s.[!ends] do
-      decr ends;
-    done;
-    if !start = 0 && !ends = n - 1 then
-      s
-    else
-      String.sub s !start (!ends - !start + 1)
 
 end
 
@@ -102,7 +59,7 @@ type connection =
   | Unix_socket of string
 
 let string_of_rpc_call call =
-  Jsonrpc.string_of_call call
+  Jsonrpc.string_of_call ~version:(Jsonrpc.V2) call
 
 let rpc_response_of_fd fd =
   Jsonrpc.response_of_in_channel (Unix.in_channel_of_descr fd)
@@ -113,14 +70,14 @@ let send_call ~fd call =
     ignore (Unix.write fd (Bytes.of_string str) 0 (String.length str)) in
   output_string body
 
-let rpc_fd (fd: Unix.file_descr) content_type call =
+let rpc_fd (fd: Unix.file_descr) call =
   try
     send_call ~fd call;
     rpc_response_of_fd fd
   with Unix.Unix_error(Unix.ECONNRESET, _, _) ->
     raise Connection_reset
 
-let with_fd ~connection ~call f =
+let with_fd ~connection ~call =
   let s =
     match connection with
     | Unix_socket sock ->
@@ -133,14 +90,14 @@ let with_fd ~connection ~call f =
     Unix.close s;
     raise e
 
-let do_rpc_unix ~content_type ~filename call =
+let do_rpc_unix filename call =
   let connection = Unix_socket filename in
-  with_fd ~connection rpc_response_of_fd
+  with_fd ~connection ~call
 
 
 let () =
   let () = Printf.printf "ocaml start\n%!" in
-  let response = do_rpc_unix ~filename:filename c in
+  let () = ignore (do_rpc_unix filename c) in
   let () = Printf.printf "got response\n%!" in
   ()
 
