@@ -1,15 +1,3 @@
-type eth_acccounts =
-  string list [@@deriving rpc]
-
-let c : Rpc.call =
-  Rpc.({ name = "eth_accounts"
-       ; params = []
-       })
-
-(* How to perform a call and expect a return of eth_accounts *)
-
-let filename = "/tmp/test/geth.ipc"
-
 
 (* below is largely based on ocaml-rpc *)
 
@@ -38,8 +26,6 @@ let lib_version = "0.1.1"
 
 module Utils = struct
 
-  exception Host_not_found of string
-
   let open_connection_unix_fd filename =
     let s = Unix.socket Unix.PF_UNIX Unix.SOCK_STREAM 0 in
     try
@@ -53,7 +39,6 @@ module Utils = struct
       raise e
 
 end
-
 
 type connection =
   | Unix_socket of string
@@ -95,10 +80,24 @@ let do_rpc_unix filename call =
   with_fd ~connection ~call
 
 
+let c : Rpc.call =
+  Rpc.({ name = "eth_accounts"
+       ; params = []
+       })
+
+(* How to perform a call and expect a return of eth_accounts *)
+
+let filename = "/tmp/test/geth.ipc"
+
+type eth_accounts =
+  string list [@@deriving rpc]
+
 let () =
   let () = Printf.printf "ocaml start\n%!" in
-  let () = ignore (do_rpc_unix filename c) in
-  let () = Printf.printf "got response\n%!" in
+  let res : Rpc.response = (do_rpc_unix filename c) in
+  let json : Rpc.t = Jsonrpc.json_of_response Jsonrpc.V2 res in
+  let result : eth_accounts = eth_accounts_of_rpc json in
+  let () = Printf.printf "got response %s \n%!" (Jsonrpc.to_string json) in
   ()
 
 (* ocaml-rpc formats every message as an HTTP request while geth does not expect this *)
