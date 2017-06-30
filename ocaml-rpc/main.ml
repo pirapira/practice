@@ -210,8 +210,6 @@ type transaction_receipt =
   ; blockNumber : int64
   ; transactionHash : string
   ; transactionIndex : int64
-  ; from : address
-  ; _to : address [@ key "to"]
   ; cumulativeGasUsed : int64
   ; gasUsed : int64
   ; contractAddress : address
