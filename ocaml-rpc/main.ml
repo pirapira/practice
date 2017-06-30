@@ -251,7 +251,9 @@ let () =
     }
   in
   let tx = (eth_sendCreateTransaction trans) in
-  let () = test_mineBlocks 1 in
+  let () = test_mineBlocks 2 in
+  let receipt = eth_getTransactionReceipt tx in
+  let () = Printf.printf "got receipt!" in
   ()
 
 (* ocaml-rpc formats every message as an HTTP request while geth does not expect this *)
