@@ -1,6 +1,6 @@
 # eth --test -d /tmp/test &
 # PID=$!
-ocamlbuild -use-ocamlfind -pkgs rpclib,rpclib.unix,rpclib.json,unix,ppx_deriving,ppx_deriving_rpc main.native || exit 1
+ocamlbuild -use-ocamlfind -pkgs batteries,rpclib,rpclib.unix,rpclib.json,unix,ppx_deriving,ppx_deriving_rpc main.native || exit 1
 # while [ ! -S /tmp/test/geth.ipc ]; do
 #	echo "still waiting"
 #	sleep 2

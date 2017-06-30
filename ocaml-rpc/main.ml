@@ -159,10 +159,66 @@ let initcode_args : string =
 
 let initcode = initcode_compiled^initcode_args
 
+let test_mineBlocks (num : int) =
+  let call : Rpc.call =
+    Rpc.({ name = "test_mineBlocks"
+         ; params = [Rpc.Int (Int64.of_int num)]
+         }) in
+  let res : Rpc.response = do_rpc_unix filename call in
+  ()
+
+let eth_getBalance (addr : address) : Big_int.big_int =
+  let call : Rpc.call =
+    Rpc.({ name = "eth_getBalance"
+         ; params = [rpc_of_address addr; Rpc.rpc_of_string "latest"]
+         }) in
+  let res : Rpc.response = do_rpc_unix filename call in
+  let json = pick_result (Jsonrpc.json_of_response Jsonrpc.V2 res) in
+  let () = Printf.printf "got result %s\n%!" (Rpc.string_of_rpc json) in
+  let result = Rpc.string_of_rpc json in
+  Big_int.big_int_of_string result
+
+let test_setChainParams (config : Rpc.t) : unit =
+  let call : Rpc.call =
+    Rpc.({ name = "test_setChainParams"
+         ; params = [config]
+         }) in
+  ignore (do_rpc_unix filename call)
+
+let rich_config (accounts : address list) : Rpc.t =
+  let accounts_with_balance =
+    List.map (fun addr ->
+        (addr, Rpc.(Dict [ ("wei", String "0x10000000000000000000") ]))) accounts in
+  Rpc.(Dict
+         [ ("sealEngine", String "NoProof")
+		 ; ("params", Dict
+                        [ ("accountStartNonce", String "0x")
+                        ; ("maximumExtraDataSize", String "0x1000000")
+                        ; ("blockReward", String "0x")
+                        ; ("allowFutureBlocks", String "1")
+			            ; ("homsteadForkBlock", String "0x00")
+			            ; ("EIP150ForkBlock", String "0x00")
+			            ; ("EIP158ForkBlock", String "0x00")
+           ])
+		 ; ("genesis", Dict
+                         [ ("author", String "0000000000000010000000000000000000000000")
+			             ; ("timestamp", String "0x00")
+			             ; ("parentHash", String "0x0000000000000000000000000000000000000000000000000000000000000000")
+			             ; ("extraData", String "0x")
+			             ; ("gasLimit", String "0x1000000000000")
+           ])
+         ;  ("accounts", Dict accounts_with_balance)
+         ]
+  )
+
 let () =
   let accounts = (eth_accounts filename) in
+  let config = rich_config accounts in
+  let () = test_setChainParams(config) in
   let () = Printf.printf "%d accounts\n" (List.length accounts) in
   let () = assert (List.length accounts = 1) in
+  let balance = eth_getBalance (List.nth accounts 0) in
+  let () = assert (Big_int.gt_big_int balance (Big_int.big_int_of_int 10000000000000000)) in
   let trans : eth_create_transaction =
     { from = List.nth accounts 0
     ; gas = 1000000
@@ -171,6 +227,7 @@ let () =
     }
   in
   let tx = (eth_sendCreateTransaction trans) in
+  let () = test_mineBlocks 1 in
   ()
 
 (* ocaml-rpc formats every message as an HTTP request while geth does not expect this *)
