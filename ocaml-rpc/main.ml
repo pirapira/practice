@@ -122,7 +122,8 @@ type eth_create_transaction =
   }
   [@@deriving rpc]
 
-let pick_result (j : Rpc.t) =
+let pick_result (j : Rpc.response) =
+  let j = Jsonrpc.json_of_response Jsonrpc.V2 j in
   Rpc.
   (match j with
   | Dict x ->
@@ -133,7 +134,7 @@ let pick_result (j : Rpc.t) =
 
 let eth_accounts (filename : string) : eth_accounts =
   let res : Rpc.response = (do_rpc_unix filename eth_accounts_call) in
-  let json : Rpc.t = pick_result (Jsonrpc.json_of_response Jsonrpc.V2 res) in
+  let json : Rpc.t = pick_result res in
   let result : eth_accounts = eth_accounts_of_rpc json in
   result
 
@@ -145,7 +146,7 @@ let eth_sendCreateTransaction (trans : eth_create_transaction) : address =
          ; params = [rpc_of_eth_create_transaction trans]
          }) in
   let res : Rpc.response = do_rpc_unix filename call in
-  let json : Rpc.t = pick_result (Jsonrpc.json_of_response Jsonrpc.V2 res) in
+  let json : Rpc.t = pick_result res in
   let result = address_of_rpc json in
   result
 
@@ -173,7 +174,7 @@ let eth_getBalance (addr : address) : Big_int.big_int =
          ; params = [rpc_of_address addr; Rpc.rpc_of_string "latest"]
          }) in
   let res : Rpc.response = do_rpc_unix filename call in
-  let json = pick_result (Jsonrpc.json_of_response Jsonrpc.V2 res) in
+  let json = pick_result res in
   let () = Printf.printf "got result %s\n%!" (Rpc.string_of_rpc json) in
   let result = Rpc.string_of_rpc json in
   Big_int.big_int_of_string result
@@ -223,6 +224,16 @@ type transaction_receipt =
   ; contractAddress : address
   ; logs : string (* XXX actually more structured *)
   } [@@ deriving rpc]
+
+let eth_getTransactionReceipt (tx : string) : transaction_receipt =
+  let call : Rpc.call =
+    { Rpc.name = "eth_getTransactionReceipt"
+    ; Rpc.params = [Rpc.rpc_of_string tx]
+    } in
+  let res : Rpc.response = do_rpc_unix filename call in
+  let json : Rpc.t = pick_result res in
+  let result = transaction_receipt_of_rpc json in
+  result
 
 let () =
   let accounts = (eth_accounts filename) in
