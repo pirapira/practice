@@ -211,6 +211,19 @@ let rich_config (accounts : address list) : Rpc.t =
          ]
   )
 
+type transaction_receipt =
+  { blockHash : string
+  ; blockNumber : int64
+  ; transactionHash : string
+  ; transactionIndex : int64
+  ; from : address
+  ; _to : address [@ key "to"]
+  ; cumulativeGasUsed : int64
+  ; gasUsed : int64
+  ; contractAddress : address
+  ; logs : string (* XXX actually more structured *)
+  } [@@ deriving rpc]
+
 let () =
   let accounts = (eth_accounts filename) in
   let config = rich_config accounts in
