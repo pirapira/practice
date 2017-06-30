@@ -167,7 +167,7 @@ let () =
     { from = List.nth accounts 0
     ; gas = 1000000
     ; value = 0
-    ; data = init_code_dummy
+    ; data = initcode
     }
   in
   let tx = (eth_sendCreateTransaction trans) in
