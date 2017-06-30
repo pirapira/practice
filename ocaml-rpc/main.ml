@@ -107,11 +107,13 @@ type address = string [@@deriving rpc]
 
 type eth_accounts = address list [@@deriving rpc]
 
-type eth_create_transaction =
+type eth_transaction =
   { from : string
-  ; gas : int
-  ; value : int
+  ; _to : string [@key "to"]
+  ; gas : string
+  ; value : string
   ; data : string
+  ; gasprice : string
   }
   [@@deriving rpc]
 
@@ -133,10 +135,10 @@ let eth_accounts s : eth_accounts =
 
 let init_code_dummy = "0x00"
 
-let eth_sendCreateTransaction s (trans : eth_create_transaction) : address =
+let eth_sendTransaction s (trans : eth_transaction) : address =
   let call : Rpc.call =
     Rpc.({ name = "eth_sendTransaction"
-         ; params = [rpc_of_eth_create_transaction trans]
+         ; params = [rpc_of_eth_transaction trans]
          }) in
   let res : Rpc.response = do_rpc_unix s call in
   let json : Rpc.t = pick_result res in
@@ -182,7 +184,7 @@ let test_setChainParams s (config : Rpc.t) : unit =
 let rich_config (accounts : address list) : Rpc.t =
   let accounts_with_balance =
     List.map (fun addr ->
-        (addr, Rpc.(Dict [ ("wei", String "0x10000000000000000000") ]))) accounts in
+        (addr, Rpc.(Dict [ ("wei", String "0x100000000000000000000000000000000000000000") ]))) accounts in
   Rpc.(Dict
          [ ("sealEngine", String "NoProof")
 		 ; ("params", Dict
@@ -193,6 +195,7 @@ let rich_config (accounts : address list) : Rpc.t =
 			            ; ("homsteadForkBlock", String "0x00")
 			            ; ("EIP150ForkBlock", String "0x00")
 			            ; ("EIP158ForkBlock", String "0x00")
+                        ; ("metropolisForkBlock", String "0xffffffffffffffffffff")
            ])
 		 ; ("genesis", Dict
                          [ ("author", String "0000000000000010000000000000000000000000")
@@ -236,9 +239,33 @@ let eth_blockNumber s : int64 =
   let result = Rpc.int64_of_rpc json in
   result
 
+let eth_getCode s addr : string =
+  let call : Rpc.call =
+    Rpc.({ name = "eth_getCode"
+         ; params = [rpc_of_address addr; rpc_of_string "latest"]
+         }) in
+  let res : Rpc.response = do_rpc_unix s call in
+  let json = pick_result res in
+  let result = Rpc.string_of_rpc json in
+  result
+
 let test_rewindToBlock s =
   let call = Rpc.({ name = "test_rewindToBlock"
                   ; params = [Rpc.Int (Int64.of_int 0)]
+                  }) in
+  ignore (do_rpc_unix s call)
+
+let personal_newAccount s =
+  let call = Rpc.({ name = "personal_newAccount"
+                  ; params = [rpc_of_string ""]
+                  }) in
+  let ret = do_rpc_unix s call in
+  let json = pick_result ret in
+  address_of_rpc json
+
+let personal_unlockAccount s addr =
+  let call = Rpc.({ name = "personal_unlockAccount"
+                  ; params = [rpc_of_address addr; rpc_of_string ""; rpc_of_int 100000]
                   }) in
   ignore (do_rpc_unix s call)
 
@@ -247,33 +274,39 @@ let wait_till_mined s old_block =
     Unix.sleep 1
   done
 
+let simple_code =
+  "0x600580600c6000396000f3006004600301"
+
 let () =
   let s = Utils.open_connection_unix_fd filename in
-  let accounts = (eth_accounts s) in
-  let config = rich_config accounts in
+  let my_acc = personal_newAccount s in
+  let config = rich_config [my_acc] in
   let () = test_setChainParams s config in
   let () = test_rewindToBlock s in
   let () = test_rewindToBlock s in
-  let () = Printf.printf "%d accounts\n" (List.length accounts) in
-  let () = assert (List.length accounts > 0) in
-  let balance = eth_getBalance s (List.nth accounts 0) in
+  let balance = eth_getBalance s my_acc in
   let () = assert (Big_int.gt_big_int balance (Big_int.big_int_of_int 10000000000000000)) in
-  let trans : eth_create_transaction =
-    { from = List.nth accounts 0
-    ; gas = 1000000
-    ; value = 0
-    ; data = init_code_dummy
+  let trans : eth_transaction =
+    { from = my_acc
+    ; gas = "0x0000000000000000000000000000000000000000000000000000000005f5e100"
+    ; value = "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ; gasprice = "0x00000000000000000000000000000000000000000000000000005af3107a4000"
+    ; data = simple_code
+    ; _to = "0x"
     }
   in
-  (* maybe unlock account *)
-  let tx = (eth_sendCreateTransaction s trans) in
+  let tx = (eth_sendTransaction s trans) in
   let old_blk = eth_blockNumber s in
   let () = test_mineBlocks s 1 in
   let () = wait_till_mined s old_blk in
-  let new_blk = eth_blockNumber s in
-  let () = assert (new_blk = Int64.(add old_blk one)) in
+(*  let () = test_mineBlocks s 1 in
+  let () = wait_till_mined s (Int64.add old_blk Int64.one) in *)
   let receipt = eth_getTransactionReceipt s tx in
-  let () = Printf.printf "got receipt!" in
+  let contract_address = receipt.contractAddress in
+  let deployed = eth_getCode s contract_address in
+  let () = assert (String.length deployed > 2) in
+  let () = Printf.printf "got receipt!\n" in
+  
   let () = Unix.close s in
   ()
 
