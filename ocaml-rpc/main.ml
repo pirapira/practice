@@ -109,6 +109,7 @@ let eth_accounts (filename : string) : eth_accounts =
 let () =
   let accounts = (eth_accounts filename) in
   let () = Printf.printf "%d accounts\n" (List.length accounts) in
+  let () = assert (List.length accounts = 1) in
   ()
 
 (* ocaml-rpc formats every message as an HTTP request while geth does not expect this *)
