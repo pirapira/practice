@@ -83,22 +83,15 @@ let rpc_fd (fd: Unix.file_descr) call =
   with Unix.Unix_error(Unix.ECONNRESET, _, _) ->
     raise Connection_reset
 
-let with_fd ~connection ~call =
-  let s =
-    match connection with
-    | Unix_socket sock ->
-      Utils.open_connection_unix_fd sock in
+let with_fd s ~call =
   try
     let result = rpc_fd s call in
-    Unix.close s;
-    result;
+    result
   with e ->
-    Unix.close s;
     raise e
 
-let do_rpc_unix filename call =
-  let connection = Unix_socket filename in
-  with_fd ~connection ~call
+let do_rpc_unix s call =
+  with_fd s ~call
 
 
 let eth_accounts_call : Rpc.call =
@@ -132,20 +125,20 @@ let pick_result (j : Rpc.response) =
      failwith "unexpected form"
   )
 
-let eth_accounts (filename : string) : eth_accounts =
-  let res : Rpc.response = (do_rpc_unix filename eth_accounts_call) in
+let eth_accounts s : eth_accounts =
+  let res : Rpc.response = (do_rpc_unix s eth_accounts_call) in
   let json : Rpc.t = pick_result res in
   let result : eth_accounts = eth_accounts_of_rpc json in
   result
 
 let init_code_dummy = "0x00"
 
-let eth_sendCreateTransaction (trans : eth_create_transaction) : address =
+let eth_sendCreateTransaction s (trans : eth_create_transaction) : address =
   let call : Rpc.call =
     Rpc.({ name = "eth_sendTransaction"
          ; params = [rpc_of_eth_create_transaction trans]
          }) in
-  let res : Rpc.response = do_rpc_unix filename call in
+  let res : Rpc.response = do_rpc_unix s call in
   let json : Rpc.t = pick_result res in
   let result = address_of_rpc json in
   result
@@ -160,31 +153,31 @@ let initcode_args : string =
 
 let initcode = initcode_compiled^initcode_args
 
-let test_mineBlocks (num : int) =
+let test_mineBlocks s (num : int) =
   let call : Rpc.call =
     Rpc.({ name = "test_mineBlocks"
          ; params = [Rpc.Int (Int64.of_int num)]
          }) in
-  let res : Rpc.response = do_rpc_unix filename call in
+  let ()  = ignore (do_rpc_unix s call) in
   ()
 
-let eth_getBalance (addr : address) : Big_int.big_int =
+let eth_getBalance s (addr : address) : Big_int.big_int =
   let call : Rpc.call =
     Rpc.({ name = "eth_getBalance"
          ; params = [rpc_of_address addr; Rpc.rpc_of_string "latest"]
          }) in
-  let res : Rpc.response = do_rpc_unix filename call in
+  let res : Rpc.response = do_rpc_unix s call in
   let json = pick_result res in
   let () = Printf.printf "got result %s\n%!" (Rpc.string_of_rpc json) in
   let result = Rpc.string_of_rpc json in
   Big_int.big_int_of_string result
 
-let test_setChainParams (config : Rpc.t) : unit =
+let test_setChainParams s (config : Rpc.t) : unit =
   let call : Rpc.call =
     Rpc.({ name = "test_setChainParams"
          ; params = [config]
          }) in
-  ignore (do_rpc_unix filename call)
+  ignore (do_rpc_unix s call)
 
 let rich_config (accounts : address list) : Rpc.t =
   let accounts_with_balance =
@@ -222,38 +215,68 @@ type transaction_receipt =
   ; cumulativeGasUsed : int64
   ; gasUsed : int64
   ; contractAddress : address
-  ; logs : string (* XXX actually more structured *)
+  ; logs : unit list (* XXX actually more structured *)
   } [@@ deriving rpc]
 
-let eth_getTransactionReceipt (tx : string) : transaction_receipt =
+let eth_getTransactionReceipt s (tx : string) : transaction_receipt =
   let call : Rpc.call =
     { Rpc.name = "eth_getTransactionReceipt"
     ; Rpc.params = [Rpc.rpc_of_string tx]
     } in
-  let res : Rpc.response = do_rpc_unix filename call in
+  let res : Rpc.response = do_rpc_unix s call in
   let json : Rpc.t = pick_result res in
   let result = transaction_receipt_of_rpc json in
   result
 
+let eth_blockNumber s : int64 =
+  let call : Rpc.call =
+    Rpc.({ name = "eth_blockNumber"
+         ; params = []
+         }) in
+  let res : Rpc.response = do_rpc_unix s call in
+  let json = pick_result res in
+  let result = Rpc.int64_of_rpc json in
+  result
+
+let test_rewindToBlock s =
+  let call = Rpc.({ name = "test_rewindToBlock"
+                  ; params = [Rpc.Int (Int64.of_int 0)]
+                  }) in
+  ignore (do_rpc_unix s call)
+
+let wait_till_mined s old_block =
+  while eth_blockNumber s = old_block do
+    Unix.sleep 1
+  done
+
 let () =
-  let accounts = (eth_accounts filename) in
+  let s = Utils.open_connection_unix_fd filename in
+  let accounts = (eth_accounts s) in
   let config = rich_config accounts in
-  let () = test_setChainParams(config) in
+  let () = test_setChainParams s config in
+  let () = test_rewindToBlock s in
+  let () = test_rewindToBlock s in
   let () = Printf.printf "%d accounts\n" (List.length accounts) in
-  let () = assert (List.length accounts = 1) in
-  let balance = eth_getBalance (List.nth accounts 0) in
+  let () = assert (List.length accounts > 0) in
+  let balance = eth_getBalance s (List.nth accounts 0) in
   let () = assert (Big_int.gt_big_int balance (Big_int.big_int_of_int 10000000000000000)) in
   let trans : eth_create_transaction =
     { from = List.nth accounts 0
     ; gas = 1000000
     ; value = 0
-    ; data = initcode
+    ; data = init_code_dummy
     }
   in
-  let tx = (eth_sendCreateTransaction trans) in
-  let () = test_mineBlocks 2 in
-  let receipt = eth_getTransactionReceipt tx in
+  (* maybe unlock account *)
+  let tx = (eth_sendCreateTransaction s trans) in
+  let old_blk = eth_blockNumber s in
+  let () = test_mineBlocks s 1 in
+  let () = wait_till_mined s old_blk in
+  let new_blk = eth_blockNumber s in
+  let () = assert (new_blk = Int64.(add old_blk one)) in
+  let receipt = eth_getTransactionReceipt s tx in
   let () = Printf.printf "got receipt!" in
+  let () = Unix.close s in
   ()
 
 (* ocaml-rpc formats every message as an HTTP request while geth does not expect this *)
