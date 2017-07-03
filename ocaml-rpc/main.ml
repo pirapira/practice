@@ -122,7 +122,13 @@ let pick_result (j : Rpc.response) =
   Rpc.
   (match j with
   | Dict x ->
-     List.assoc "result" x
+     begin
+       try
+         List.assoc "result" x
+       with Not_found ->
+         let () = Printf.eprintf "got response %s\n%!" (Rpc.string_of_rpc j) in
+         raise Not_found
+     end
   | _ ->
      failwith "unexpected form"
   )
@@ -225,7 +231,9 @@ let eth_getTransactionReceipt s (tx : string) : transaction_receipt =
     ; Rpc.params = [Rpc.rpc_of_string tx]
     } in
   let res : Rpc.response = do_rpc_unix s call in
-  let json : Rpc.t = pick_result res in
+  let json : Rpc.t =
+    pick_result res
+  in
   let result = transaction_receipt_of_rpc json in
   result
 
@@ -269,6 +277,14 @@ let personal_unlockAccount s addr =
                   }) in
   ignore (do_rpc_unix s call)
 
+let eth_getStorageAt s addr slot =
+  let call = Rpc.({ name = "eth_getStorageAt"
+                  ; params = [rpc_of_address addr; rpc_of_string (Big_int.string_of_big_int slot); rpc_of_string "latest"]
+             }) in
+  let ret = do_rpc_unix s call in
+  let json = pick_result ret in
+  Big_int.big_int_of_string (Rpc.string_of_rpc json)
+
 let wait_till_mined s old_block =
   while eth_blockNumber s = old_block do
     Unix.sleep 1
@@ -307,6 +323,8 @@ let () =
   let deployed = eth_getCode s contract_address in
   let () = assert (String.length deployed > 2) in
   let () = Printf.printf "saw code!\n" in
+  let original = eth_getStorageAt s contract_address (Big_int.big_int_of_int 4) in
+  let () = assert (Big_int.(eq_big_int original zero_big_int)) in
 
   let () = Unix.close s in
   ()
