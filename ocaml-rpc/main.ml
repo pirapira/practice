@@ -325,6 +325,21 @@ let () =
   let () = Printf.printf "saw code!\n" in
   let original = eth_getStorageAt s contract_address (Big_int.big_int_of_int 4) in
   let () = assert (Big_int.(eq_big_int original zero_big_int)) in
+  let call : eth_transaction =
+    { from = my_acc
+    ; _to = contract_address
+    ; gas = "0x0000000000000000000000000000000000000000000000000000000005f5e100"
+    ; value = "100"
+    ; data = ""
+    ; gasprice = "0x00000000000000000000000000000000000000000000000000005af3107a4000"
+    } in
+  let tx = eth_sendTransaction s call in
+  let old_blk = eth_blockNumber s in
+  let () = test_mineBlocks s 1 in
+  let () = wait_till_mined s old_blk in
+  let receipt = eth_getTransactionReceipt s tx in
+  let n = eth_getStorageAt s contract_address (Big_int.big_int_of_int 4) in
+  let () = assert (Big_int.(eq_big_int n (big_int_of_int 100))) in
 
   let () = Unix.close s in
   ()
