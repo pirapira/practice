@@ -302,11 +302,12 @@ let () =
 (*  let () = test_mineBlocks s 1 in
   let () = wait_till_mined s (Int64.add old_blk Int64.one) in *)
   let receipt = eth_getTransactionReceipt s tx in
+  let () = Printf.printf "got receipt!\n" in
   let contract_address = receipt.contractAddress in
   let deployed = eth_getCode s contract_address in
   let () = assert (String.length deployed > 2) in
-  let () = Printf.printf "got receipt!\n" in
-  
+  let () = Printf.printf "saw code!\n" in
+
   let () = Unix.close s in
   ()
 
