@@ -1,2 +1,4 @@
 PKG rpclib
 PKG rpclib.unix
+PKG ppx_deriving
+PKG ppx_deriving_rpc
