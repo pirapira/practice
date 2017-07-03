@@ -10,5 +10,4 @@ ocamlbuild -use-ocamlfind -pkgs batteries,rpclib,rpclib.unix,rpclib.json,unix,pp
 # sudo mv /tmp/test/geth.ipc /tmp/test/geth.ipc.original
 # sudo socat -t100 -x -v UNIX-LISTEN:/tmp/test/geth.ipc,mode=777,reuseaddr,fork UNIX-CONNECT:/tmp/test/geth.ipc.original
 
-./main.native
 #kill $PID
