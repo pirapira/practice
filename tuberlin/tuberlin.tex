@@ -1,0 +1,102 @@
+\documentclass{beamer}
+
+\title{Lalalaa}
+\author{Yoichi Hirai}
+\date{Berlin, 30 Aug. 2017}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}{What is Ethereum}
+
+\begin{itemize}
+\item replicated
+\item no central parties
+\end{itemize}
+
+How does Ethereum synchronize execution traces?
+\end{frame}
+
+\begin{frame}{Blockchain}
+is just a data strucuture.
+
+a picture of trees.
+\end{frame}
+
+\begin{frame}{Proof of Work}
+
+\alert{by here, the work mining has to be described}
+
+If you succeed create a block:
+\begin{enumerate}
+\item the block reward is only spendable in chains that include your block
+\item you should send around blocks (assumption: rationality of nodes)
+\end{enumerate}
+
+If you see a block being sent around:
+\begin{enumerate}
+\item if that's the best block you've seen, you should try to mine on the block (assumption: rationality and other nodes' good behavior)
+\item you should broadcase the block you are mining on (assumption: rationality and other nodes' good behavior)
+\end{enumerate}
+
+Does it work?  Yes, see Bitcoin.
+
+Why?  I don't know, honestly.
+\end{frame}
+
+\begin{frame}{Evaluating Proof of Work}
+
+No good properties distributed-computation-wise.
+
+(A good protocol can usually stand < 1/3 of nodes being Byzantine.)
+
+\structure{One Byzantine node can}
+\begin{itemize}
+\item be lucky enough to guess the secret keys of all public keys it sees.
+\end{itemize}
+
+\structure{One (economically) irrational node can}
+\begin{itemize}
+\item buy lots of machines to mine quicker than anybody, rewriting the history from any point.
+\end{itemize}
+
+\structure{Anything better possible?}
+Maybe not much because one party can play many nodes.
+
+\structure{What about counting the monetary bounty instead of number of nodes?}
+That could work.
+\end{frame}
+
+
+\begin{frame}{Proof-of-stake}
+\begin{itemize}
+\item bonded validators
+\item ``nothing-at-stake problem''
+\item slashing wrong-doing
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Some definitions}
+When I was in Paris I received the following definitions.
+
+(paste the definitions)
+\end{frame}
+
+\begin{frame}{Alloy modelling}
+Being unsure what it meant, I turned to Alloy.
+\end{frame}
+
+
+\begin{frame}{Isabelle/HOL}
+
+\end{frame}
+
+
+\begin{frame}{Other formal verification projects}
+\end{frame}
+
+\end{document}
