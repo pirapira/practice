@@ -99,24 +99,62 @@ These designs require numbers that carry values.
 
 \begin{frame}{Proof-of-Stake}
 
-Replacing GPU and electricity with deposits of in-protocol tokens.
+\begin{itemize}
+\item Replacing GPU and electricity with deposits of in-protocol tokens.
+\item A difference: in-protocol tokens duplicate as forks happen.
+\item Solution: provably dishonest behavior is punished on all forks.
+\end{itemize}
 
-The deposits are made in some common anscestors of all considered blocks.
-
-Provably dishonest behavior is punished, the deposits are gone on all chains.
-
-(TODO: see ``nothing at stake problem'') again
-
-What about cases hard to determine who violated the rules?
-
-Two parties blaming each other is already bad enough.
+\alert{Slash those who produce blocks on multiple chains!}\\ is too intimidating.
 \end{frame}
 
 
-\begin{frame}{Some definitions}
-When I was in Paris I received the following definitions.
+\begin{frame}{I Received a Challenge: Original Text}
 
-(paste the definitions)
+  \structure{Message types}
+
+  \begin{itemize}
+  \item commit(HASH, view)
+  \item prepare(HASH, view, view\_source),\\ -1 $\le$ view\_source < view
+  \end{itemize}
+
+  \structure{Slashing conditions}
+
+  \begin{enumerate}
+    \item commit(H, v) REQUIRES 2/3 prepare(H, v, vs) for some consistent vs
+    \item prepare(H, v, vs) REQUIRES 2/3 prepare(H\_anc, vs, vs') for some consistent vs', where H\_anc is a (v-vs)-degree ancestor of H, UNLESS vs = -1
+    \item commit(H, v) + prepare(H, w, u) ILLEGAL if u < v < w
+    \item prepare(X1, v, vs1) + prepare(X2, v, vs2) ILLEGAL unless X1 = X2 and vs1 = vs2
+  \end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Challenge Continued}
+
+  \structure{Accountable safety argument}\\ (proof path - assume two incompatible values got committed, show 1/3+ SLASHED)
+
+  \structure{Case 1}
+
+\quad 2/3 commit(X, v) \& 2/3 commit(Y, v)
+
+$\rightarrow$ 2/3 prepare(X, v, vs) \& 2/3 prepare(Y, v, vs')  (\structure{1.})
+
+$\rightarrow$ 1/3 SLASHED (\structure{4.})
+
+\structure{Case 2}
+
+\quad 2/3 commit(Y, v2) \& 2/3 commit(X, v1),\\ Y is NOT a (v2-v1)-degree descendant of X, define Y[i] to be the ancestor of Y in view i
+
+$\rightarrow$ 2/3 prepare(Y[v2], v2, vs), vs < v2 (\structure{1.})
+
+$\rightarrow$ 2/3 prepare(Y[vs], vs, vs') (\structure{2.})
+
+$\rightarrow$ ...
+
+[continue induction until vs' < v1]
+
+(Two base cases follow.)
+
 \end{frame}
 
 \begin{frame}{Alloy modelling}
@@ -125,6 +163,7 @@ Being unsure what it meant, I turned to Alloy.
 
 
 \begin{frame}{Isabelle/HOL}
+\alert{Turned out terse but followable in Isabelle/HOL (1,800 lines).}
 
 \end{frame}
 
