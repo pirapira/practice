@@ -22,45 +22,47 @@ Ethereum is one-instance of a virtual machine
 
 \vfill
 
-How does Ethereum synchronize execution traces?
+How does Ethereum synchronize execution traces? \\
+Asynchronous communication cannot establish new common knowledge.
 \end{frame}
 
 \begin{frame}{Blockchain}
-is just a data strucuture.
+is just a data strucuture.  It is a tree, not a chain.
 
-a picture of trees.
+\includegraphics[width=\textwidth]{blockchains.png}
+
+A small number $h(B_n)$ identifies a sequence $B_0, \ldots B_n$ and \\
+moreover, in Ethereum, the execution trace of a virtual machine.
+
 \end{frame}
 
 
 \begin{frame}{Proof of Work}
 
 \begin{itemize}
-\item a block needs a nicely chosen nonce, so that the ``ethash'' of block header is small enough
+\item a block's content $D$ needs to contain a nicely chosen nonce\\ so that the hash $h(D)$ of the block is small enough
 \item when you find such a nonce, the protocol gives reward in your account (in the state after the block)
+\item account?
 \end{itemize}
 
-The reward is only on your block.
+Finding a good nonce is called \structure{mining}.
 
-
-The reward is also valid on the decendants of your block.
-
+I belive nobody has found a better way than brute-force.
 \end{frame}
 
-
 \begin{frame}{Proof of Work}
-
-\alert{by here, the work mining has to be described}
 
 \structure{If you succeed creating a block}
 \begin{enumerate}
 \item the block reward is only spendable in chains that include your block
-\item you should send around blocks (assumption: rationality of nodes)
+\item you should send around the block, maybe
 \end{enumerate}
 
 \structure{If you see a block being sent around}
 \begin{enumerate}
-\item if that's the best block you've seen, you should try to mine on the block (assumption: rationality and other nodes' good behavior)
-\item you should broadcase the block you are mining on (assumption: rationality and other nodes' good behavior)
+\item if that's the best block you've seen, you should try to mine on the block \\
+      (assumption: absense of complicated motives, other nodes' straightforward behavior)
+\item you should broadcast the block you are mining on, maybe
 \end{enumerate}
 
 \structure{Does it work?}  Yes, see Bitcoin.
@@ -84,11 +86,13 @@ No good properties distributed-computation-wise.
 \item buy lots of machines to mine quicker than anybody, rewriting the history from any point.
 \end{itemize}
 
-\structure{Why this?} ``number of nodes'' is not reliable.
+\structure{Why would anybody choose this?} \underline{number of nodes} is not reliable.
 
 Instead, Proof-of-Work uses electricity consumption (or luck).
 
 Instead, Proof-of-Stake uses in-protocol deposit.
+
+These designs require numbers that carry values.
 
 \end{frame}
 
