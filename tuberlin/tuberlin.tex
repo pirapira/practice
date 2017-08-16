@@ -167,7 +167,44 @@ You can type in definitions, assumptiions and a conjecture.
 Alloy tries to find a counterexample.  No guarantees of false-negatives.
 \end{frame}
 
-\begin{frame}{Alloy example}
+\begin{frame}[fragile]{Alloy example}
+
+\begin{verbatim}
+module minimalt
+
+sig View {
+  v_prev: lone View // associated with at most one View called v_prev
+}
+
+sig Hash {
+  h_prev: lone Hash
+}
+
+fact {
+  no x : Hash | x in x.(^h_prev)
+}
+
+sig Prepare {
+  hash : Hash,
+  view: View,
+  view_src : View
+}
+
+fact {
+   all p : Prepare | p.view_src in (p.view.(^v_prev))
+}
+
+pred some_prepare {
+   some Prepare
+}
+
+run some_prepare for 3
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}
+\includegraphics{circle.png}
 \end{frame}
 
 \begin{frame}{First attempt}
