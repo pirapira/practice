@@ -211,17 +211,22 @@ pred slashed1 (s : Node) {
 etc.
 \end{frame}
 
-\begin{frame}{I can also claim 2/3 non-slashed imply no fork}
-
+\begin{frame}[fragile]{I can also claim 2/3 non-slashed imply no fork}
 
 \begin{verbatim}
 pred incompatible_commits {
-
    some Node &&
-   some h0, h1 : Hash | (not h0 in h1.(*h_prev)) &&
+   some h0, h1 : Hash |
+    (not h0 in h1.(*h_prev)) &&
     (not h1 in h0.(*h_prev)) &&
-    (#{n0 : Node | some c0 : Commit | c0.c_sender = n0 && c0.c_hash = h0}).mul[3] >= (#Node).mul[2] &&
-    (#{n1 : Node | some c1 : Commit | c1.c_sender = n1 && c1.c_hash = h1}).mul[3] >= (#Node).mul[2] &&
+    (#{n0 : Node |
+         some c0 : Commit |
+         c0.c_sender = n0 && c0.c_hash = h0}
+    ).mul[3] >= (#Node).mul[2] &&
+    (#{n1 : Node |
+         some c1 : Commit |
+         c1.c_sender = n1 && c1.c_hash = h1}
+    ).mul[3] >= (#Node).mul[2] &&
     (#SlashedNode).mul[3] < (#Node)
 }
 \end{verbatim}
@@ -272,6 +277,13 @@ fact {
 \begin{frame}{Exists something something}
 \end{frame}
 
+\begin{frame}
+\begin{enumerate}
+\item check the definitions and the statement in Alloy
+\item prove with confidence in Isabelle/HOL
+\end{enumerate}
+\end{frame}
+
 
 \begin{frame}{Other formal verification projects}
 
@@ -279,8 +291,6 @@ fact {
 \item eth-isabelle: an executable specification of Ethereum Virtual Machine in Lem: available for Isabelle/HOL too.
 \item some ongoing work on EVM1.5
 \end{itemize}
-
-
 \end{frame}
 
 \end{document}
