@@ -172,31 +172,19 @@ Alloy tries to find a counterexample.  No guarantees of false-negatives.
 \begin{verbatim}
 module minimalt
 
-sig View {
-  v_prev: lone View // associated with at most one View called v_prev
-}
+sig View { v_prev: lone View }
 
-sig Hash {
-  h_prev: lone Hash
-}
+sig Hash { h_prev: lone Hash }
 
-fact {
-  no x : Hash | x in x.(^h_prev)
-}
+fact { no x : Hash | x in x.(^h_prev) }
 
-sig Prepare {
-  hash : Hash,
-  view: View,
-  view_src : View
-}
+sig Prepare { hash : Hash,
+              view : View,
+              view_src : View }
 
-fact {
-   all p : Prepare | p.view_src in (p.view.(^v_prev))
-}
+fact{ all p : Prepare | p.view_src in (p.view.(^v_prev))}
 
-pred some_prepare {
-   some Prepare
-}
+pred some_prepare { some Prepare }
 
 run some_prepare for 3
 \end{verbatim}
@@ -204,13 +192,67 @@ run some_prepare for 3
 \end{frame}
 
 \begin{frame}
-\includegraphics{circle.png}
+\includegraphics[width=\textwidth]{circle.png}
 \end{frame}
 
-\begin{frame}{First attempt}
+\begin{frame}[fragile]{Somehow I can code the Slashing Conditions}
+
+Text: commit(H, v) REQUIRES 2/3 prepare(H, v, vs) for some consistent vs
+
+\begin{verbatim}
+// Slashing condition [i]
+pred slashed1 (s : Node) {
+   some c : Commit |
+      s in c.c_sender &&
+      (#{n : Node | some p : Prepare | p.p_sender = n && p.p_hash = c.c_hash}). mul[ 3]  < mul[ #{n : Node}, 2 ]
+}
+\end{verbatim}
+
+etc.
 \end{frame}
 
-\begin{frame}{Second attempt}
+\begin{frame}{I can also claim 2/3 non-slashed imply no fork}
+
+
+\begin{verbatim}
+pred incompatible_commits {
+
+   some Node &&
+   some h0, h1 : Hash | (not h0 in h1.(*h_prev)) &&
+    (not h1 in h0.(*h_prev)) &&
+    (#{n0 : Node | some c0 : Commit | c0.c_sender = n0 && c0.c_hash = h0}).mul[3] >= (#Node).mul[2] &&
+    (#{n1 : Node | some c1 : Commit | c1.c_sender = n1 && c1.c_hash = h1}).mul[3] >= (#Node).mul[2] &&
+    (#SlashedNode).mul[3] < (#Node)
+}
+\end{verbatim}
+
+Now Alloy, go find incompatible commits.
+\end{frame}
+
+\begin{frame}{Fork?}
+\includegraphics[width=\textwidth]{fork.png}
+
+\structure<2->{Mistake: I forgot to specify Views form a total order.}
+\end{frame}
+
+\begin{frame}{Another Fork?}
+\includegraphics[width=\textwidth]{fork2.png}
+\end{frame}
+
+\begin{frame}[fragile]{Another Fork?  Mistake}
+
+Explain this...
+
+\begin{verbatim}
+fact {
+   all p : Prepare |
+      (p.p_sender in SaneNode && some p.p_view_src.v_prev) implies
+      some h_anc : Hash | some v_src : View |
+-      h_anc in p.p_hash.(^h_prev) &&
++      h_anc in p.p_hash.(^h_prev) && h_anc.h_view = p.p_view_src &&
+       (#{n : Node | some p' : Prepare | p'.p_sender = n && p'.p_hash = h_anc && p'.p_view_src = v_src }). mul[ 3]  >= (#{n : Node}).mul[ 2 ]
+}
+\end{verbatim}
 \end{frame}
 
 \begin{frame}{Third attempt}
