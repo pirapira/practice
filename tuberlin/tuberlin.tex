@@ -280,8 +280,9 @@ When I was confident I turned to Isabelle/HOL.
 \alert{Turned out followable in Isabelle/HOL (1,800 lines).}
 \end{frame}
 
-\begin{frame}
 \renewcommand\isacharbar{$\mid$}
+
+\begin{frame}{Messages and Validators}
 
 \isacommand{datatype}\isamarkupfalse%
 \ hash\ {\isacharequal}\ Hash\ int%
@@ -301,7 +302,156 @@ When I was confident I turned to Isabelle/HOL.
 \ signed{\isacharunderscore}message\ {\isacharequal}\ {\isachardoublequoteopen}validator\ {\isacharasterisk}\ message{\isachardoublequoteclose}%
 \end{frame}
 
-\begin{frame}{Fork}
+\begin{frame}{Situation}
+
+\isacommand{record}\isamarkupfalse%
+\ situation\ {\isacharequal}\isanewline
+\ \ Validators\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}validator\ set{\isachardoublequoteclose}\isanewline
+\ \ Messages\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}signed{\isacharunderscore}message\ set{\isachardoublequoteclose}\isanewline
+\ \ PrevHash\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}hash\ {\isasymRightarrow}\ hash\ option{\isachardoublequoteclose}%
+
+\end{frame}
+
+
+\renewcommand\isacharunderscore{\_}
+
+
+\begin{frame}{Ancestors}
+
+\isacommand{fun}\isamarkupfalse%
+\ nth{\isacharunderscore}ancestor\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ nat\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ hash\ option{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+\ \ {\isachardoublequoteopen}nth{\isacharunderscore}ancestor\ {\isacharunderscore}\ {\isadigit{0}}\ h\ {\isacharequal}\ Some\ h{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ {\isachardoublequoteopen}nth{\isacharunderscore}ancestor\ s\ {\isacharparenleft}Suc\ n{\isacharparenright}\ h\ {\isacharequal}\isanewline
+\ \ \ {\isacharparenleft}case\ PrevHash\ s\ h\ of\isanewline
+\ \ \ \ \ \ None\ {\isasymRightarrow}\ None\isanewline
+\ \ \ \ {\isacharbar}\ Some\ h{\isacharprime}\ {\isasymRightarrow}\ nth{\isacharunderscore}ancestor\ s\ n\ h{\isacharprime}{\isacharparenright}{\isachardoublequoteclose}%
+
+\end{frame}
+
+\begin{frame}
+\isacommand{definition}\isamarkupfalse%
+\ is{\isacharunderscore}descendant{\isacharunderscore}or{\isacharunderscore}self\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+           {\isachardoublequoteopen}is{\isacharunderscore}descendant{\isacharunderscore}or{\isacharunderscore}self\ s\ x\ y\ {\isacharequal}\ {\isacharparenleft}{\isasymexists}\ n{\isachardot}\ nth{\isacharunderscore}ancestor\ s\ n\ x\ {\isacharequal}\ Some\ y{\isacharparenright}{\isachardoublequoteclose}%
+
+           \vfill
+\isacommand{definition}\isamarkupfalse%
+\ not{\isacharunderscore}on{\isacharunderscore}same{\isacharunderscore}chain\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}not{\isacharunderscore}on{\isacharunderscore}same{\isacharunderscore}chain\ s\ x\ y\ {\isacharequal}\ {\isacharparenleft}{\isacharparenleft}{\isasymnot}\ is{\isacharunderscore}descendant{\isacharunderscore}or{\isacharunderscore}self\ s\ x\ y{\isacharparenright}\ {\isasymand}\ {\isacharparenleft}{\isasymnot}\ is{\isacharunderscore}descendant{\isacharunderscore}or{\isacharunderscore}self\ s\ y\ x{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\end{frame}
+
+\renewcommand{\isacharbraceleft}{\{}
+\renewcommand{\isacharbraceright}{\}}
+
+\begin{frame}
+\isacommand{definition}\isamarkupfalse%
+\ two{\isacharunderscore}thirds\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ {\isacharparenleft}validator\ {\isasymRightarrow}\ bool{\isacharparenright}\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}two{\isacharunderscore}thirds\ s\ f\ {\isacharequal}\isanewline
+\ \ \ {\isacharparenleft}{\isadigit{2}}\ {\isacharasterisk}\ card\ {\isacharparenleft}Validators\ s{\isacharparenright}\ {\isasymle}\\\ \ \ \  {\isadigit{3}}\ {\isacharasterisk}\ card\ {\isacharparenleft}{\isacharbraceleft}n{\isachardot}\ n\ {\isasymin}\ Validators\ s\ {\isasymand}\ f\ n{\isacharbraceright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\end{frame}
+
+\begin{frame}
+\isacommand{definition}\isamarkupfalse%
+\ prepared\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ view\ {\isasymRightarrow}\ view\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}prepared\ s\ h\ v\ vs\ {\isacharequal}\isanewline
+\ \ \ {\isacharparenleft}two{\isacharunderscore}thirds{\isacharunderscore}sent{\isacharunderscore}message\ s\ {\isacharparenleft}Prepare\ {\isacharparenleft}h{\isacharcomma}\ v{\isacharcomma}\ vs{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\vfill
+\isacommand{definition}\isamarkupfalse%
+\ committed\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ hash\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+           {\isachardoublequoteopen}committed\ s\ h\ {\isacharequal}\\
+           \ \ \ \ {\isacharparenleft}{\isasymexists}\ v{\isachardot}\ two{\isacharunderscore}thirds{\isacharunderscore}sent{\isacharunderscore}message\ s\ {\isacharparenleft}Commit\ {\isacharparenleft}h{\isacharcomma}\ v{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\isamarkupsection{The Slashing Conditions (not skippable)%
+}
+\isamarkuptrue%
+%
+\end{frame}
+
+\begin{frame}
+\begin{isamarkuptext}%
+[i] A validator is slashed when it has sent a commit message of a hash
+      that is not prepared yet.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ slashed{\isacharunderscore}one\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ validator\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}slashed{\isacharunderscore}one\ s\ n\ {\isacharequal}\isanewline
+\ {\isacharparenleft}n\ {\isasymin}\ Validators\ s\ {\isasymand}\isanewline
+\ \ \ \ {\isacharparenleft}{\isasymexists}\ h\ v{\isachardot}\isanewline
+\ \ \ \ \ \ {\isacharparenleft}{\isacharparenleft}n{\isacharcomma}\ Commit\ {\isacharparenleft}h{\isacharcomma}\ v{\isacharparenright}{\isacharparenright}\ {\isasymin}\ Messages\ s\ {\isasymand}\isanewline
+\ \ \ \ {\isacharparenleft}{\isasymnot}\ {\isacharparenleft}{\isasymexists}\ vs{\isachardot}\ {\isacharminus}{\isadigit{1}}\ {\isasymle}\ vs\ {\isasymand}\ vs\ {\isacharless}\ v\ {\isasymand}\ prepared\ s\ h\ v\ vs{\isacharparenright}\ {\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\end{frame}
+
+\begin{frame}
+\begin{isamarkuptext}%
+[ii] A validator is slashed when it has sent a prepare message whose
+      view src is not -1 but has no supporting preparation in the view src.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ slashed{\isacharunderscore}two\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ validator\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}slashed{\isacharunderscore}two\ s\ n\ {\isacharequal}\isanewline
+\ \ {\isacharparenleft}n\ {\isasymin}\ Validators\ s\ {\isasymand}\isanewline
+\ \ \ \ \ {\isacharparenleft}{\isasymexists}\ h\ v\ vs{\isachardot}\isanewline
+\ \ \ \ \ \ \ {\isacharparenleft}{\isacharparenleft}n{\isacharcomma}\ Prepare\ {\isacharparenleft}h{\isacharcomma}\ v{\isacharcomma}\ vs{\isacharparenright}{\isacharparenright}\ {\isasymin}\ Messages\ s\ {\isasymand}\isanewline
+\ \ \ \ \ \ \ vs\ {\isasymnoteq}\ {\isacharminus}{\isadigit{1}}\ {\isasymand}\isanewline
+\ \ \ \ \ \ \ {\isacharparenleft}{\isasymnot}\ {\isacharparenleft}{\isasymexists}\ h{\isacharunderscore}anc\ vs{\isacharprime}{\isachardot}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ {\isacharminus}{\isadigit{1}}\ {\isasymle}\ vs{\isacharprime}\ {\isasymand}\ vs{\isacharprime}\ {\isacharless}\ vs\ {\isasymand}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ Some\ h{\isacharunderscore}anc\ {\isacharequal}\ nth{\isacharunderscore}ancestor\ s\ {\isacharparenleft}nat\ {\isacharparenleft}v\ {\isacharminus}\ vs{\isacharparenright}{\isacharparenright}\ h\ {\isasymand}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ prepared\ s\ h{\isacharunderscore}anc\ vs\ vs{\isacharprime}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\end{frame}
+
+\begin{frame}
+\begin{isamarkuptext}%
+[iii] A validator is slashed when it has sent a commit message and a prepare message
+     containing view numbers in a specific constellation.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ slashed{\isacharunderscore}three\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ validator\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}slashed{\isacharunderscore}three\ s\ n\ {\isacharequal}\isanewline
+\ \ {\isacharparenleft}n\ {\isasymin}\ Validators\ s\ {\isasymand}\isanewline
+\ \ \ \ {\isacharparenleft}{\isasymexists}\ x\ y\ v\ w\ u{\isachardot}\isanewline
+\ \ \ \ \ \ {\isacharparenleft}n{\isacharcomma}\ Commit\ {\isacharparenleft}x{\isacharcomma}\ v{\isacharparenright}{\isacharparenright}\ {\isasymin}\ Messages\ s\ {\isasymand}\isanewline
+\ \ \ \ \ \ {\isacharparenleft}n{\isacharcomma}\ Prepare\ {\isacharparenleft}y{\isacharcomma}\ w{\isacharcomma}\ u{\isacharparenright}{\isacharparenright}\ {\isasymin}\ Messages\ s\ {\isasymand}\isanewline
+\ \ \ \ \ \ u\ {\isacharless}\ v\ {\isasymand}\ v\ {\isacharless}\ w{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\end{frame}
+
+\begin{frame}
+\begin{isamarkuptext}%
+[iv] A validator is slashed when it has signed two different Prepare messages at the same view.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ slashed{\isacharunderscore}four\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ validator\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}slashed{\isacharunderscore}four\ s\ n\ {\isacharequal}\isanewline
+\ \ {\isacharparenleft}n\ {\isasymin}\ Validators\ s\ {\isasymand}\isanewline
+\ \ \ \ {\isacharparenleft}{\isasymexists}\ x{\isadigit{1}}\ x{\isadigit{2}}\ v\ vs{\isadigit{1}}\ vs{\isadigit{2}}{\isachardot}\isanewline
+\ \ \ \ \ \ {\isacharparenleft}n{\isacharcomma}\ Prepare\ {\isacharparenleft}x{\isadigit{1}}{\isacharcomma}\ v{\isacharcomma}\ vs{\isadigit{1}}{\isacharparenright}{\isacharparenright}\ {\isasymin}\ Messages\ s\ {\isasymand}\isanewline
+\ \ \ \ \ \ {\isacharparenleft}n{\isacharcomma}\ Prepare\ {\isacharparenleft}x{\isadigit{2}}{\isacharcomma}\ v{\isacharcomma}\ vs{\isadigit{2}}{\isacharparenright}{\isacharparenright}\ {\isasymin}\ Messages\ s\ {\isasymand}\isanewline
+\ \ \ \ \ \ {\isacharparenleft}x{\isadigit{1}}\ {\isasymnoteq}\ x{\isadigit{2}}\ {\isasymor}\ vs{\isadigit{1}}\ {\isasymnoteq}\ vs{\isadigit{2}}{\isacharparenright}{\isacharparenright}{\isacharparenright}{\isachardoublequoteclose}%
+\end{frame}
+
+\begin{frame}
+\begin{isamarkuptext}%
+A validator is slashed when at least one of the above conditions [i]--[iv] hold.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{definition}\isamarkupfalse%
+\ slashed\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ validator\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}slashed\ s\ n\ {\isacharequal}\ {\isacharparenleft}slashed{\isacharunderscore}one\ s\ n\ {\isasymor}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ slashed{\isacharunderscore}two\ s\ n\ {\isasymor}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ slashed{\isacharunderscore}three\ s\ n\ {\isasymor}\isanewline
+\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ slashed{\isacharunderscore}four\ s\ n{\isacharparenright}{\isachardoublequoteclose}\isanewline
+\isanewline
+\isacommand{definition}\isamarkupfalse%
+\ one{\isacharunderscore}third{\isacharunderscore}slashed\ {\isacharcolon}{\isacharcolon}\ {\isachardoublequoteopen}situation\ {\isasymRightarrow}\ bool{\isachardoublequoteclose}\isanewline
+\isakeyword{where}\isanewline
+{\isachardoublequoteopen}one{\isacharunderscore}third{\isacharunderscore}slashed\ s\ {\isacharequal}\ one{\isacharunderscore}third\ s\ {\isacharparenleft}slashed\ s{\isacharparenright}{\isachardoublequoteclose}%
 \end{frame}
 
 \begin{frame}{Exists something}
