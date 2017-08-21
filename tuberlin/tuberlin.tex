@@ -454,25 +454,33 @@ A validator is slashed when at least one of the above conditions [i]--[iv] hold.
 {\isachardoublequoteopen}one{\isacharunderscore}third{\isacharunderscore}slashed\ s\ {\isacharequal}\ one{\isacharunderscore}third\ s\ {\isacharparenleft}slashed\ s{\isacharparenright}{\isachardoublequoteclose}%
 \end{frame}
 
-\begin{frame}{Exists something}
+\begin{frame}{Conclusion}
+\begin{isamarkuptext}%
+The statement of accountable safety is simple.  If a situation has a finite number of validators (but not zero),
+if two hashes x and y are committed in the situation, but if the two hashes are not on the same chain,
+at least one-third of the validators are slashed in the situation.%
+\end{isamarkuptext}\isamarkuptrue%
+\isacommand{lemma}\isamarkupfalse%
+\ accountable{\isacharunderscore}safety\ {\isacharcolon}\isanewline
+\ \ {\isachardoublequoteopen}situation{\isacharunderscore}has{\isacharunderscore}finitely{\isacharunderscore}many{\isacharunderscore}validators\ s\ {\isasymLongrightarrow}\isanewline
+\ \ \ committed\ s\ x\ {\isasymLongrightarrow}\ committed\ s\ y\ {\isasymLongrightarrow}\isanewline
+\ \ \ not{\isacharunderscore}on{\isacharunderscore}same{\isacharunderscore}chain\ s\ x\ y\ {\isasymLongrightarrow}\ one{\isacharunderscore}third{\isacharunderscore}slashed\ s{\isachardoublequoteclose}\isanewline
 \end{frame}
 
-\begin{frame}{Exists something something}
-\end{frame}
+\begin{frame}{After that}
+  \begin{itemize}
+  \item the result was expanded to allow the validator set change
+  \end{itemize}
 
-\begin{frame}
-\begin{enumerate}
-\item check the definitions and the statement in Alloy
-\item prove with confidence in Isabelle/HOL
-\end{enumerate}
+  The ``Casper contract'' is not verified according to these slashing conditions.
 \end{frame}
-
 
 \begin{frame}{Other formal verification projects}
-
 \begin{itemize}
 \item eth-isabelle: an executable specification of Ethereum Virtual Machine in Lem: available for Isabelle/HOL too.
+\item a compiler on that
 \item some ongoing work on EVM1.5
+\item KEVM by Grigore Rosu and his team
 \end{itemize}
 \end{frame}
 
