@@ -1,4 +1,9 @@
 \documentclass{beamer}
+\usepackage{isabelle,isabellesym}
+
+
+\isabellestylett
+
 
 \title{Isabelle/HOL on Fork Prevention\\ in the Coming Ethereum Protocol}
 \author{Yoichi Hirai\\ {\small Ethereum Foundation}}
@@ -65,6 +70,8 @@ I belive nobody has found a better way than brute-force.
 \item you should broadcast the block you are mining on, maybe
 \end{enumerate}
 
+\vfill
+
 \structure{Does it work?}  Yes, see Bitcoin.
 
 \structure{Why?}  I don't know, honestly.
@@ -78,21 +85,21 @@ No good properties distributed-computation-wise.
 
 \structure{One Byzantine node can}
 \begin{itemize}
-\item be lucky enough to guess the secret keys of all public keys it sees.
+\item be lucky enough to guess the secret keys of everyone.
 \end{itemize}
 
 \structure{One (economically) irrational node can}
 \begin{itemize}
-\item buy lots of machines to mine quicker than anybody, rewriting the history from any point.
+\item buy lots of machines to mine quicker than anybody,\\ rewriting the history from any point in the past.
 \end{itemize}
 
-\structure{Why would anybody choose this?} \underline{number of nodes} is not reliable.
+\structure{Why this ``algorithm''?} \underline{number of nodes} is not reliable.
 
 Instead, Proof-of-Work uses electricity consumption (or luck).
 
 Instead, Proof-of-Stake uses in-protocol deposit.
 
-These designs require numbers that carry values.
+These designs require numbers that carry values associated to public keys.
 
 \end{frame}
 
@@ -105,7 +112,7 @@ These designs require numbers that carry values.
 \item Solution: provably dishonest behavior is punished on all forks.
 \end{itemize}
 
-\alert{Slash those who produce blocks on multiple chains!}\\ is too intimidating.
+\alert{Slash those who's active on multiple chains!}\\ is too intimidating.
 \end{frame}
 
 
@@ -115,7 +122,7 @@ These designs require numbers that carry values.
 
   \begin{itemize}
   \item commit(HASH, view)
-  \item prepare(HASH, view, view\_source),\\ -1 $\le$ view\_source < view
+  \item prepare(HASH, view, view\_source),\\ -1 $\le$ view\_source $<$ view
   \end{itemize}
 
   \structure{Slashing conditions}
@@ -123,8 +130,8 @@ These designs require numbers that carry values.
   \begin{enumerate}
     \item commit(H, v) REQUIRES 2/3 prepare(H, v, vs) for some consistent vs
     \item prepare(H, v, vs) REQUIRES 2/3 prepare(H\_anc, vs, vs') for some consistent vs', where H\_anc is a (v-vs)-degree ancestor of H, UNLESS vs = -1
-    \item commit(H, v) + prepare(H, w, u) ILLEGAL if u < v < w
-    \item prepare(X1, v, vs1) + prepare(X2, v, vs2) ILLEGAL unless X1 = X2 and vs1 = vs2
+    \item commit(H, v) + prepare(H, w, u) ILLEGAL if u $<$ v $<$ w
+    \item prepare(X1, v, vs1) + prepare(X2, v, vs2) ILLEGAL\\ unless X1 = X2 and vs1 = vs2
   \end{enumerate}
 
 \end{frame}
@@ -151,7 +158,7 @@ $\rightarrow$ 2/3 prepare(Y[vs], vs, vs') (\structure{2.})
 
 $\rightarrow$ ...
 
-[continue induction until vs' < v1]
+[continue induction until vs' $<$ v1]
 
 (Two base cases follow.)
 
@@ -160,18 +167,17 @@ $\rightarrow$ ...
 \begin{frame}{Alloy modelling}
 Being unsure what the definitions meant, I turned to Alloy.
 
-Alloy \url{url} is a tool based on relational-algebra.
-
-You can type in definitions, assumptiions and a conjecture.
-
+Alloy \url{http://alloy.mit.edu/alloy/} is a prototyping-tool.
+\vfill
+You can type in definitions, assumptiions and a conjecture \\
+in relational algebra (a bit more expressible than FOL).
+\vfill
 Alloy tries to find a counterexample.  No guarantees of false-negatives.
 \end{frame}
 
 \begin{frame}[fragile]{Alloy example}
 
 \begin{verbatim}
-module minimalt
-
 sig View { v_prev: lone View }
 
 sig Hash { h_prev: lone Hash }
@@ -204,14 +210,19 @@ Text: commit(H, v) REQUIRES 2/3 prepare(H, v, vs) for some consistent vs
 pred slashed1 (s : Node) {
    some c : Commit |
       s in c.c_sender &&
-      (#{n : Node | some p : Prepare | p.p_sender = n && p.p_hash = c.c_hash}). mul[ 3]  < mul[ #{n : Node}, 2 ]
+      (#{n : Node | some p : Prepare |
+            p.p_sender = n
+         && p.p_hash = c.c_hash})
+
+     . mul[ 3]
+     < mul[ #{n : Node}, 2 ]
 }
 \end{verbatim}
 
 etc.
 \end{frame}
 
-\begin{frame}[fragile]{I can also claim 2/3 non-slashed imply no fork}
+\begin{frame}[fragile]{I can also define a fork with 2/3 non-slashed nodes}
 
 \begin{verbatim}
 pred incompatible_commits {
@@ -246,26 +257,48 @@ Now Alloy, go find incompatible commits.
 
 \begin{frame}[fragile]{Another Fork?  Mistake}
 
-Explain this...
+``prepare(H, v, vs) REQUIRES 2/3 prepare(H\_anc, vs, vs') for some consistent vs', where H\_anc is a (v-vs)-degree ancestor of H, UNLESS vs = -1''
 
 \begin{verbatim}
 fact {
    all p : Prepare |
       (p.p_sender in SaneNode && some p.p_view_src.v_prev) implies
       some h_anc : Hash | some v_src : View |
--      h_anc in p.p_hash.(^h_prev) &&
-+      h_anc in p.p_hash.(^h_prev) && h_anc.h_view = p.p_view_src &&
+      h_anc in p.p_hash.(^h_prev) &&
++     h_anc.h_view = p.p_view_src &&
        (#{n : Node | some p' : Prepare | p'.p_sender = n && p'.p_hash = h_anc && p'.p_view_src = v_src }). mul[ 3]  >= (#{n : Node}).mul[ 2 ]
 }
 \end{verbatim}
 \end{frame}
 
-\begin{frame}{Third attempt}
+\begin{frame}{Isabelle/HOL}
+
+When I was confident I turned to Isabelle/HOL.
+
+\vfill
+
+\alert{Turned out followable in Isabelle/HOL (1,800 lines).}
 \end{frame}
 
-\begin{frame}{Isabelle/HOL}
-\alert{Turned out terse but followable in Isabelle/HOL (1,800 lines).}
+\begin{frame}
+\renewcommand\isacharbar{$\mid$}
 
+\isacommand{datatype}\isamarkupfalse%
+\ hash\ {\isacharequal}\ Hash\ int%
+
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ view\ {\isacharequal}\ int%
+
+\isacommand{datatype}\isamarkupfalse%
+\ message\ {\isacharequal}\isanewline
+\ \ Commit\ {\isachardoublequoteopen}hash\ {\isacharasterisk}\ view{\isachardoublequoteclose}\isanewline
+{\isacharbar}\ Prepare\ {\isachardoublequoteopen}hash\ {\isacharasterisk}\ view\ {\isacharasterisk}\ view{\isachardoublequoteclose}%
+
+\isacommand{datatype}\isamarkupfalse%
+\ validator\ {\isacharequal}\ Validator\ int%
+
+\isacommand{type{\isacharunderscore}synonym}\isamarkupfalse%
+\ signed{\isacharunderscore}message\ {\isacharequal}\ {\isachardoublequoteopen}validator\ {\isacharasterisk}\ message{\isachardoublequoteclose}%
 \end{frame}
 
 \begin{frame}{Fork}
