@@ -34,11 +34,11 @@ Ethereum is one-instance of a virtual machine
 
 \vfill
 
-How does Ethereum synchronize execution traces? \\
+\structure{How does Ethereum synchronize execution traces?} \\
 Asynchronous communication cannot establish new common knowledge.
 \end{frame}
 
-\begin{frame}{Blockchain}
+\begin{frame}{A Blockchain}
 is just a data strucuture.  It is a tree, not a chain.
 
 \includegraphics[width=\textwidth]{blockchains.png}
@@ -59,7 +59,7 @@ moreover, in Ethereum, the execution trace of a virtual machine.
 
 Finding a good nonce is called \structure{mining}.
 
-I belive nobody has found a better way than brute-force.
+I belive nobody has found a better way than brute-forcing.
 \end{frame}
 
 \begin{frame}{Proof of Work}
@@ -255,7 +255,7 @@ Now Alloy, go find incompatible commits.
 \begin{frame}{Fork?}
 \includegraphics[width=\textwidth]{fork.png}
 
-\structure<2->{Mistake: I forgot to specify Views form a total order.}
+\only<2->{Mistake: I forgot to specify Views have a total order.}
 \end{frame}
 
 \begin{frame}{Another Fork?}
@@ -264,7 +264,7 @@ Now Alloy, go find incompatible commits.
 
 \begin{frame}[fragile]{Another Fork?  Mistake}
 
-``prepare(H, v, vs) REQUIRES 2/3 prepare(H\_anc, vs, vs') for some consistent vs', where H\_anc is a (v-vs)-degree ancestor of H, UNLESS vs = -1''
+``prepare(H, v, vs) REQUIRES 2/3 prepare(H\_anc, vs, vs') for some consistent vs', \alert{where H\_anc is a (v-vs)-degree ancestor of H}, UNLESS vs = -1''
 
 \begin{verbatim}
 fact {
@@ -273,7 +273,9 @@ fact {
       some h_anc : Hash | some v_src : View |
       h_anc in p.p_hash.(^h_prev) &&
 +     h_anc.h_view = p.p_view_src &&
-       (#{n : Node | some p' : Prepare | p'.p_sender = n && p'.p_hash = h_anc && p'.p_view_src = v_src }). mul[ 3]  >= (#{n : Node}).mul[ 2 ]
+       (#{n : Node | some p' : Prepare | p'.p_sender = n
+              && p'.p_hash = h_anc && p'.p_view_src = v_src })
+        . mul[ 3]  >= (#{n : Node}).mul[ 2 ]
 }
 \end{verbatim}
 \end{frame}
@@ -485,7 +487,7 @@ at least one-third of the validators are slashed in the situation.%
 \begin{frame}{Other formal verification projects}
 \begin{itemize}
 \item eth-isabelle: an executable specification of Ethereum Virtual Machine in Lem: available for Isabelle/HOL too.
-\item a compiler on that
+\item a compiler on top of eth-isabelle by @mrsmkl
 \item some ongoing work on EVM1.5
 \item KEVM by Grigore Rosu and his team
 \end{itemize}
