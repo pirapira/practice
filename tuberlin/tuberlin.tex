@@ -24,7 +24,7 @@
 
 \begin{frame}{What is Ethereum}
 
-Ethereum is one-instance of a virtual machine
+Ethereum is one instance of a virtual machine, which is
 \begin{itemize}
 \item as powerful as a 20-year-old smart phone
 \item replicated globally
@@ -35,7 +35,7 @@ Ethereum is one-instance of a virtual machine
 \vfill
 
 \structure{How does Ethereum synchronize execution traces?} \\
-Asynchronous communication cannot establish new common knowledge.
+Asynchronous communication cannot establish new common knowledge [Chandy \& Misra, 1986].
 \end{frame}
 
 \begin{frame}{A Blockchain}
@@ -58,8 +58,11 @@ moreover, in Ethereum, the execution trace of a virtual machine.
 \end{itemize}
 
 Finding a good nonce is called \structure{mining}.
-
+\vfill
 I belive nobody has found a better way than brute-forcing.
+\vfill
+``Ethereum miners are renting Boeing 747s to ship graphics cards and AMD shares are soaring'' ({\tiny\url{https://qz.com/1039809}})\\
+(sounds a bit like Moai's).
 \end{frame}
 
 \begin{frame}{Proof of Work}
@@ -280,6 +283,10 @@ fact {
 \end{verbatim}
 \end{frame}
 
+\begin{frame}{Prepare2 does not justify Prepare1}
+\includegraphics[width=\textwidth]{fork3.png}
+\end{frame}
+
 \begin{frame}{Isabelle/HOL}
 
 When I was confident I turned to Isabelle/HOL.
@@ -479,9 +486,8 @@ at least one-third of the validators are slashed in the situation.%
 \begin{frame}{After that}
   \begin{itemize}
   \item the result was expanded to allow the validator set change
+  \item The ``Casper contract'' is not verified according to these slashing conditions.
   \end{itemize}
-
-  The ``Casper contract'' is not verified according to these slashing conditions.
 \end{frame}
 
 \begin{frame}{Other formal verification projects}
