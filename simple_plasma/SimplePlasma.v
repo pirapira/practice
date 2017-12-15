@@ -41,33 +41,37 @@ Record ManagerState :=
       deposits: map nat (map nat unit);
     }.
 
+
+Parameter StepResult : Type.
+Parameter WithdrawSuccess : StepResult.
+
 (* finite set of headers.  MSet or something else?  Just a finite map?  Just a list? *)
 
 (* to be defined *)
-Parameter submitBlockHeader : PlasmaHeader -> ManagerState -> ManagerState.
+Parameter submitBlockHeader : PlasmaHeader -> ManagerState -> ManagerState * StepResult.
 
 (* to be defined *)
-Parameter deposit : ManagerState -> ManagerState.
+Parameter deposit : ManagerState -> ManagerState * StepResult.
 
 Inductive StartWithdrawalInput :=
   swi: nat -> forall (idx : SixBits) (t : PlasmaTransaction),
       MerkleProof idx t -> StartWithdrawalInput.
 
 (* to be defined *)
-Parameter startWithdrawal : StartWithdrawalInput -> ManagerState -> ManagerState.
+Parameter startWithdrawal : StartWithdrawalInput -> ManagerState -> ManagerState * StepResult.
 
 Inductive ChallengeWithdrawalInput :=
   cwi: nat -> nat -> forall (idx : SixBits) (t : PlasmaTransaction),
            MerkleProof idx t -> ChallengeWithdrawalInput.
 
 (* to be defined *)
-Parameter challengeWithdrawal : ChallengeWithdrawalInput -> ManagerState -> ManagerState.
+Parameter challengeWithdrawal : ChallengeWithdrawalInput -> ManagerState -> ManagerState * StepResult.
 
 (* to be defined, maybe needs some output. *)
-Parameter finalizeWithdrawal : ManagerState -> ManagerState.
+Parameter finalizeWithdrawal : ManagerState -> ManagerState * StepResult.
 
 (* to be defined *)
-Parameter incrementTime : positive -> ManagerState -> ManagerState.
+Parameter incrementTime : positive -> ManagerState -> ManagerState * StepResult.
 
 (* XXX: how to model the 24-hour passage?  Maybe a special step for a tick of the clock? *)
 Inductive step :=
@@ -79,7 +83,7 @@ Inductive step :=
 | timeStep : positive -> step
 .
 
-Definition applyStep (s : step) (orig : ManagerState) : ManagerState :=
+Definition applyStep (s : step) (orig : ManagerState) : ManagerState * StepResult :=
   match s with
   | submitBlockHeaderStep p => submitBlockHeader p orig
   | depositStep => deposit orig
@@ -89,19 +93,26 @@ Definition applyStep (s : step) (orig : ManagerState) : ManagerState :=
   | timeStep n => incrementTime n orig
   end.
 
+(* repeat *)
+Parameter applySteps : list step -> ManagerState -> ManagerState.
+
 (* ... *)
 
 (* Claim: if a transaction is confirmed, then the client will be able to withdraw the coin. *)
 
+(* TODO: document arguments *)
 Parameter TransactionIsConfirmed :
   forall (blknum : nat) (txId : SixBits), PlasmaTransaction -> ManagerState -> Prop.
 
-Definition withdrawalStep :
+Parameter withdrawalStep :
   forall (blknum : nat) (txId : SixBits), PlasmaTransaction -> ManagerState -> step.
 
 (* add more inputs when necessary *)
-Definition finalizeStep :
+(* TODO: document arguments *)
+Parameter finalizeStep :
   forall (blknum : nat) (txId : SixBits), PlasmaTransaction -> ManagerState -> step.
+
+Parameter one_day_passed : ManagerState -> ManagerState -> Prop.
 
 (* If a ManagerState satisfies something,  (TransactionIsConfirmed)
  * player can call something  (withdrawalStep)
@@ -110,5 +121,15 @@ Definition finalizeStep :
  * player can finalize the thing.
  *)
 
+Lemma WithdrawConfirmed :
+  forall (m : ManagerState) blknum txId tr,
+    TransactionIsConfirmed blknum txId tr m ->
+    forall adv : list step,
+      let one_day_after := applySteps (withdrawalStep blknum txId tr m :: adv) m in
+      one_day_passed m one_day_after ->
+      snd (applyStep (finalizeStep blknum txId tr m) one_day_after) = WithdrawSuccess.
+Admitted.
 
 (* Claim: a malicious operator that is capable of creating **invalid** blocks cannot withdraw any coins that they did not deposit. *)
+
+(* how to express "they did not deposit? *)
