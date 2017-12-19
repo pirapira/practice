@@ -1,6 +1,10 @@
+Require Import EqNat.
 Require Import FMapList.
 Require Import BinNums.
 Require Import PArith.
+Require Import Equalities.
+
+
 
 (* Do I really want to do MerkleProof thing? *)
 
@@ -22,6 +26,8 @@ Parameter merkleCheckerCorrectness :
 
 (** MerkleRoot & MerkleProof should be a Module Type, maybe. *)
 
+Module Type SimplePlasma (Address : HasEq).
+
 Parameter SixBits : Type.
 Parameter PlasmaTransaction : Type.
 
@@ -37,7 +43,7 @@ Parameter map : Type -> Type -> Type.
 Record ManagerState :=
   mkManagerState
     {
-      header: map nat PlasmaHeader;
+      headers: map nat PlasmaHeader;
       latest_block_number: nat;
       deposits: map nat (map nat unit);
       time: positive;
@@ -46,12 +52,25 @@ Record ManagerState :=
 Parameter Address : Type.
 
 Parameter StepResult : Type.
+Parameter Failure : StepResult.
 Parameter Success : StepResult.
 
 (* finite set of headers.  MSet or something else?  Just a finite map?  Just a list? *)
 
 (* to be defined *)
-Parameter submitBlockHeader : PlasmaHeader -> ManagerState -> ManagerState * StepResult.
+Parameter headers_update : ManagerState -> map nat PlasmaHeader -> ManagerState.
+
+Parameter map_insert : forall {A B : Type}, A -> B -> (map A B) -> (map A B).
+
+Parameter increment_latest_block_number : ManagerState -> ManagerState.
+
+Definition submitBlockHeader (h : PlasmaHeader) (orig : ManagerState) : ManagerState * StepResult :=
+  if beq_nat (h.(block_number)) (orig.(latest_block_number) + 1) then
+    (increment_latest_block_number
+       (headers_update orig (map_insert h.(block_number) h orig.(headers))), Success)
+  else
+    (orig, Failure).
+
 
 (* to be defined *)
 Parameter deposit : Address -> ManagerState -> ManagerState * StepResult.
@@ -143,6 +162,13 @@ Admitted.
 
 Parameter Coin : Type.
 
-Parameter DidDeposit : Coin -> list step -> Prop.
+(* The coin is deposited by the address but not withdrawed yet. *)
+Parameter DidDeposit : Address -> Coin -> list step -> Prop.
+
+Parameter Withdrawable : Address -> Coin -> list step -> Prop.
+
+Lemma Nonstealable :
+  forall a c history,
+    Withdrawable a c history -> DidDeposit a c history.
 
 (* how to express "they did not deposit? *)
