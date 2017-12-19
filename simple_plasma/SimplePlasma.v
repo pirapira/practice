@@ -43,6 +43,7 @@ Record ManagerState :=
       time: positive;
     }.
 
+Parameter Address : Type.
 
 Parameter StepResult : Type.
 Parameter Success : StepResult.
@@ -53,7 +54,7 @@ Parameter Success : StepResult.
 Parameter submitBlockHeader : PlasmaHeader -> ManagerState -> ManagerState * StepResult.
 
 (* to be defined *)
-Parameter deposit : ManagerState -> ManagerState * StepResult.
+Parameter deposit : Address -> ManagerState -> ManagerState * StepResult.
 
 Inductive StartWithdrawalInput :=
   swi: nat -> forall (idx : SixBits) (t : PlasmaTransaction),
@@ -82,7 +83,7 @@ Definition incrementTime (d : positive) (orig : ManagerState) : ManagerState * S
 (* XXX: how to model the 24-hour passage?  Maybe a special step for a tick of the clock? *)
 Inductive step :=
   submitBlockHeaderStep : PlasmaHeader -> step
-| depositStep : step
+| depositStep : Address -> step
 | startWithdrawalStep : StartWithdrawalInput -> step
 | chllengeWithdrawalStep : ChallengeWithdrawalInput -> step
 | finalizeWithdrawalStep : step
@@ -92,7 +93,7 @@ Inductive step :=
 Definition applyStep (s : step) (orig : ManagerState) : ManagerState * StepResult :=
   match s with
   | submitBlockHeaderStep p => submitBlockHeader p orig
-  | depositStep => deposit orig
+  | depositStep addr => deposit addr orig
   | startWithdrawalStep i => startWithdrawal i orig
   | chllengeWithdrawalStep i => challengeWithdrawal i orig
   | finalizeWithdrawalStep => finalizeWithdrawal orig
@@ -137,5 +138,11 @@ Lemma WithdrawConfirmed :
 Admitted.
 
 (* Claim: a malicious operator that is capable of creating **invalid** blocks cannot withdraw any coins that they did not deposit. *)
+
+(* XXX: this claim needs to assume enough people challenge the claim. *)
+
+Parameter Coin : Type.
+
+Parameter DidDeposit : Coin -> list step -> Prop.
 
 (* how to express "they did not deposit? *)
