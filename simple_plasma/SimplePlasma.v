@@ -1,5 +1,6 @@
 Require Import FMapList.
 Require Import BinNums.
+Require Import PArith.
 
 (* Do I really want to do MerkleProof thing? *)
 
@@ -39,11 +40,12 @@ Record ManagerState :=
       header: map nat PlasmaHeader;
       latest_block_number: nat;
       deposits: map nat (map nat unit);
+      time: positive;
     }.
 
 
 Parameter StepResult : Type.
-Parameter WithdrawSuccess : StepResult.
+Parameter Success : StepResult.
 
 (* finite set of headers.  MSet or something else?  Just a finite map?  Just a list? *)
 
@@ -71,7 +73,11 @@ Parameter challengeWithdrawal : ChallengeWithdrawalInput -> ManagerState -> Mana
 Parameter finalizeWithdrawal : ManagerState -> ManagerState * StepResult.
 
 (* to be defined *)
-Parameter incrementTime : positive -> ManagerState -> ManagerState * StepResult.
+Parameter updateTime : forall (orig : ManagerState) (v : positive), ManagerState.
+
+(* to be defined *)
+Definition incrementTime (d : positive) (orig : ManagerState) : ManagerState * StepResult :=
+  (updateTime orig (orig.(time) + d), Success ).
 
 (* XXX: how to model the 24-hour passage?  Maybe a special step for a tick of the clock? *)
 Inductive step :=
@@ -127,7 +133,7 @@ Lemma WithdrawConfirmed :
     forall adv : list step,
       let one_day_after := applySteps (withdrawalStep blknum txId tr m :: adv) m in
       one_day_passed m one_day_after ->
-      snd (applyStep (finalizeStep blknum txId tr m) one_day_after) = WithdrawSuccess.
+      snd (applyStep (finalizeStep blknum txId tr m) one_day_after) = Success.
 Admitted.
 
 (* Claim: a malicious operator that is capable of creating **invalid** blocks cannot withdraw any coins that they did not deposit. *)
