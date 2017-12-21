@@ -1,3 +1,5 @@
+Require Import ssrbool ssreflect.
+
 Require Import EqNat.
 Require Import FMapList.
 Require Import BinNums.
@@ -83,8 +85,22 @@ Inductive StartWithdrawalInput :=
   swi: nat -> forall (idx : SixBits) (t : PlasmaTransaction),
       MerkleProof idx t -> StartWithdrawalInput.
 
+Parameter get_merkle_root : nat -> ManagerState -> MerkleRoot SixBits PlasmaTransaction.
+
+Parameter checkAndRecordWithdrawal : StartWithdrawalInput -> ManagerState -> ManagerState * StepResult.
+
 (* to be defined *)
-Parameter startWithdrawal : StartWithdrawalInput -> ManagerState -> ManagerState * StepResult.
+Definition startWithdrawal (i : StartWithdrawalInput) (orig : ManagerState) : ManagerState * StepResult.
+Proof.
+case i.
+move => blocknr idx t pr.
+exact(
+    if merkleChecker idx t (get_merkle_root blocknr orig) pr then
+      checkAndRecordWithdrawal i orig
+    else
+      (orig, Failure)
+  ).
+Defined.
 
 Inductive ChallengeWithdrawalInput :=
   cwi: nat -> nat -> forall (idx : SixBits) (t : PlasmaTransaction),
