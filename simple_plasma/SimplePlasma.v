@@ -46,6 +46,7 @@ Record ManagerState :=
       headers: map nat PlasmaHeader;
       latest_block_number: nat;
       deposits: map nat (map nat unit);
+      deposit_counter: nat; (* counter that starts at 64, reset when block number changes *)
       time: positive;
     }.
 
@@ -71,9 +72,12 @@ Definition submitBlockHeader (h : PlasmaHeader) (orig : ManagerState) : ManagerS
   else
     (orig, Failure).
 
+Parameter increment_deposit_counter : ManagerState -> ManagerState.
 
-(* to be defined *)
-Parameter deposit : Address -> ManagerState -> ManagerState * StepResult.
+Parameter add_deposit_from : Address -> ManagerState -> ManagerState.
+
+Definition deposit (a : Address) (orig : ManagerState) : ManagerState * StepResult :=
+  (increment_deposit_counter (add_deposit_from a orig), Success).
 
 Inductive StartWithdrawalInput :=
   swi: nat -> forall (idx : SixBits) (t : PlasmaTransaction),
