@@ -107,7 +107,22 @@ Inductive ChallengeWithdrawalInput :=
            MerkleProof idx t -> ChallengeWithdrawalInput.
 
 (* to be defined *)
-Parameter challengeWithdrawal : ChallengeWithdrawalInput -> ManagerState -> ManagerState * StepResult.
+Parameter challengeWithdrawalOne : ChallengeWithdrawalInput -> ManagerState -> bool.
+Parameter challengeWithdrawalTwo : ChallengeWithdrawalInput -> ManagerState -> bool.
+(* to be defined... difficult... *)
+Parameter challengeWithdrawalThree : ChallengeWithdrawalInput -> ManagerState -> bool.
+
+Parameter noteChallenged : ChallengeWithdrawalInput -> ManagerState -> ManagerState.
+Parameter noteChallengedThree : ChallengeWithdrawalInput -> ManagerState -> ManagerState.
+
+Definition challengeWithdrawal (i : ChallengeWithdrawalInput) (orig : ManagerState) : ManagerState * StepResult :=
+  if challengeWithdrawalThree i orig then
+    (noteChallengedThree i orig, Success)
+  else
+  if challengeWithdrawalOne i orig || challengeWithdrawalTwo i orig then
+    (noteChallenged i orig, Success)
+  else
+    (orig, Failure).
 
 (* to be defined, maybe needs some output. *)
 Parameter finalizeWithdrawal : ManagerState -> ManagerState * StepResult.
@@ -177,18 +192,19 @@ Lemma WithdrawConfirmed :
 Admitted.
 
 (* Claim: a malicious operator that is capable of creating **invalid** blocks cannot withdraw any coins that they did not deposit. *)
-
+(* It has to be rewritten into something else. *)
 (* XXX: this claim needs to assume enough people challenge the claim. *)
 
 Parameter Coin : Type.
 
-(* The coin is deposited by the address but not withdrawed yet. *)
-Parameter DidDeposit : Address -> Coin -> list step -> Prop.
+(* The coin is owned. *)
+Parameter owns : Address -> Coin -> list step -> bool.
 
-Parameter Withdrawable : Address -> Coin -> list step -> Prop.
+Parameter withdrawable : Address -> Coin -> list step -> bool.
 
+(* Well, this prooperty does not hold because transactions can move around deposits *)
 Lemma Nonstealable :
   forall a c history,
-    Withdrawable a c history -> DidDeposit a c history.
+    withdrawable a c history -> owns a c history.
 
 (* how to express "they did not deposit? *)
